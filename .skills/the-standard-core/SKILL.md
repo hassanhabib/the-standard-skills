@@ -1,6 +1,8 @@
 ---
 name: The Standard Core
 description: Enforces the theory, purpose, modeling, simulation flow, and non-negotiable core values of The Standard.
+the standard version: v2.12.0
+skill version: v0.3.0.0
 ---
 
 # The Standard Core

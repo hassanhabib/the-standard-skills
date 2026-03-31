@@ -1,6 +1,8 @@
 ---
 name: The Standard Practices
 description: Enforces Standard contribution workflow, branching, categories, commits, pull requests, configuration handling, measurements, contribution points, and ranks.
+the standard version: v2.12.0
+skill version: v0.3.0.0
 ---
 
 # The Standard Practices

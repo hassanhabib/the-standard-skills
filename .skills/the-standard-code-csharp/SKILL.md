@@ -1,6 +1,8 @@
 ---
 name: The Standard Code CSharp
 description: Enforces the C# naming, organization, method, variable, class, field, instantiation, and comment/documentation rules of The Standard.
+the standard version: v2.12.0
+skill version: v0.3.0.0
 ---
 
 # The Standard Code CSharp
