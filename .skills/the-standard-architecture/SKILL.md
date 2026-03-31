@@ -680,14 +680,14 @@ RedRhino.Core.Synchronizer.Tests.Units/
     └── Foundations/
         ├── LegacyUsers/
         │   ├── LegacyUserServiceTests.cs              (partial — setup & helpers)
-        │   ├── LegacyUserServiceTests.Logic.cs        (partial — happy-path tests)
-        │   ├── LegacyUserServiceTests.Validations.cs  (partial — validation tests)
-        │   └── LegacyUserServiceTests.Exceptions.cs   (partial — exception tests)
+        │   ├── LegacyUserServiceTests.Logic.{Method}.cs        (partial — happy-path tests)
+        │   ├── LegacyUserServiceTests.Validations.{Method}.cs  (partial — validation tests)
+        │   └── LegacyUserServiceTests.Exceptions.{Method}.cs   (partial — exception tests)
         └── Persons/
             ├── PersonServiceTests.cs                   (partial — setup & helpers)
-            ├── PersonServiceTests.Logic.cs             (partial — happy-path tests)
-            ├── PersonServiceTests.Validations.cs       (partial — validation tests)
-            └── PersonServiceTests.Exceptions.cs        (partial — exception tests)
+            ├── PersonServiceTests.Logic.{Method}.cs             (partial — happy-path tests)
+            ├── PersonServiceTests.Validations.{Method}.cs       (partial — validation tests)
+            └── PersonServiceTests.Exceptions.{Method}.cs        (partial — exception tests)
 ```
 
 ---
