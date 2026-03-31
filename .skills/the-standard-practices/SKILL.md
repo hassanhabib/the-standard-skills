@@ -262,10 +262,9 @@ A typical solution structure would look like this...
 
 ```
   |-- Taarafo.Core                              (API)
-  |-- Taarafo.Core.Infrastructure.Build         (Console App)
-  |-- Taarafo.Core.Infrastructure.Provision     (Console App)
+  |-- Taarafo.Core.Infrastructure               (Console App)
   |-- Taarafo.Core.Tests.Acceptance             (xUnit Test Project)
-  |-- Taarafo.Core.Tests.Build                  (xUnit Test Project)
+  |-- Taarafo.Core.Tests.Unit                   (xUnit Test Project)
 ```
 
 #### 4.1.2.1 Project Structure 
@@ -391,7 +390,7 @@ Order configuration providers in code to suit the priorities for the underlying 
 A typical sequence of configuration providers is:
 
 1. appsettings.json
-2. appsettings.{Environment}.json
+2. appsettings.\{Environment\}.json
 3. User secrets
 4. Environment variables using the Environment Variables configuration provider.
 5. Command-line arguments using the Command-line configuration provider.
@@ -555,6 +554,7 @@ The Standard promotes ideals of fairness to all. The Standard recognizes that in
 
 ### 4.2.0 Contribution Points
 The following is a list of all types of contributions and the value for each:
+
 | Title Starts With          | Return Value |
 |----------------------------|--------------|
 | INFRA                      | 10           |
@@ -686,6 +686,7 @@ These estimates represent typical implementation durations for a single service 
 
 ### 4.2.2 Ranks
 The following are the ranks based on the life-time accumalation and contribution to The Standard Community and Standard-Compliant projects:
+
 | POSITION            | SCORE           |
 |---------------------|-----------------|
 | SWE I               | 10,000          |
@@ -914,11 +915,10 @@ A typical solution structure would look like this...
 
 
 ```
-  |-- Taarafo.Core                              (API)
-  |-- Taarafo.Core.Infrastructure.Build         (Console App)
-  |-- Taarafo.Core.Infrastructure.Provision     (Console App)
-  |-- Taarafo.Core.Tests.Acceptance             (xUnit Test Project)
-  |-- Taarafo.Core.Tests.Build                  (xUnit Test Project)
+  |-- Taarafo.Core                     (API)
+  |-- Taarafo.Core.Infrastructure      (Console App)
+  |-- Taarafo.Core.Tests.Acceptance    (xUnit Test Project)
+  |-- Taarafo.Core.Tests.Unit          (xUnit Test Project)
 
 ```
 
@@ -1299,6 +1299,7 @@ The Standard promotes ideals of fairness to all. The Standard recognizes that in
 
 #### 12.2.0 Contribution Points
 The following is a list of all types of contributions and the value for each:
+
 | Title Starts With          | Return Value |
 |----------------------------|--------------|
 | INFRA                      | 10           |
@@ -1430,6 +1431,7 @@ These estimates represent typical implementation durations for a single service 
 
 #### 12.2.2 Ranks
 The following are the ranks based on the life-time accumalation and contribution to The Standard Community and Standard-Compliant projects:
+
 | POSITION            | SCORE           |
 |---------------------|------------------|
 | SWE I               | 10,000          |

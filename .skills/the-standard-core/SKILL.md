@@ -235,6 +235,10 @@ Iteration is allowed later, but do not skip purpose to jump into code.
 0. Do not force Standard compliance via style cops or analyzers as the primary mechanism.
 1. Teach the Standard person-to-person.
 2. Favor conviction and understanding over coercion.
+3. AI-assisted coding (including “vibe coding”) is acceptable, 
+   provided a human remains actively involved and retains full responsibility for the final code.
+4. AI may be used for code reviews and suggestions, but the final authority for approval 
+   and merge decisions must always rest with a human.
 
 ### Pass Forward
 

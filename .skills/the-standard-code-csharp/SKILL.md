@@ -630,9 +630,9 @@ We will follow a process of Uglification Beautification. We uglify our code to b
 ##### Don't
 ```csharp
 	students
-	.Where(student => student.Name is "Elbek")
-	.Select(student => student.Name)
-	.ToList();
+		.Where(student => student.Name is "Elbek")
+		.Select(student => student.Name)
+		.ToList();
 ```
 
 The first approach enforces simplifying and cutting the chaining short as more calls continues to uglify the code like this:
@@ -648,10 +648,11 @@ The uglification process forces breaking down the chains to smaller lists then p
 
 ```csharp
 	student
-	.Where(student => student.Name is "Elbek")
-	.Select(student => student.Name)
-	.OrderBy(student => student.Name)
-	.ToList();
+		.Where(student => student.Name is "Elbek")
+		.Select(student => student.Name)
+		.OrderBy(student => student.Name)
+		.ToList();
+	
 	ProcessStudents(students);
 ```
 

@@ -92,7 +92,11 @@ This skill explicitly covers:
         - Dependency Validations
       - Mapping
         - Non-Local Models
+      - Exception Handling
         - Exceptions Mappings
+          - Localise External Exceptions
+          - Caragorize Exceptions
+        - Logging
   - Processing Services (Higher-Order Business Logic)
     - Introduction
     - On The Map
@@ -110,7 +114,10 @@ This skill explicitly covers:
       - Combinations
       - Signature Mapping
       - Non-Exception Local Models
-      - Exception Models
+      - Exception Handling      
+        - Unwrap and Localise Foundation Exceptions
+        - Caragorize Exceptions
+        - Logging
   - Orchestration Services (Complex Higher Order Logic)
     - Introduction
     - On The Map
@@ -136,7 +143,10 @@ This skill explicitly covers:
       - Call Order
         - Natural Order
         - Enforced Order
-      - Exceptions Mapping (Wrapping & Unwrapping)
+      - Exception Handling      
+        - Unwrap and Localise Foundation Exceptions
+        - Caragorize Exceptions
+        - Logging
     - Variations
       - Coordination
       - Management
@@ -291,11 +301,14 @@ Use this skill for system design, architecture review, decomposition, refactorin
 9. Brokers cannot depend on services.
 10. One resource, one broker.
 11. Use support brokers for generic capabilities such as time and logging.
-12. Use entity brokers for resource- or entity-specific integrations.
+12. Use entity brokers / api brokers for resource- or entity-specific integrations.
 13. Prefer partial interfaces and partial classes to organize multi-entity brokers.
 14. Prefer generic helper methods in broker root partials so entity partials do not touch native clients directly.
 15. Use asynchronous abstractions consistently.
 16. Prefer ValueTask in Standard examples and abstractions when that aligns with the implementation profile.
+17. Brokers live under Brokers/ and their namespaces.
+18. Broker configurations live in appsettings.json or equivalent configuration stores
+19. Broker configuration classes live under Brokers/ and their namespaces.
 
 ### Broker clarifications
 
@@ -316,17 +329,20 @@ Use this skill for system design, architecture review, decomposition, refactorin
 
 ## Service-wide rules
 
-0. Services contain business logic.
-1. Service operations break into validations, processing, and integration.
-2. Service types break into validators, orchestrators, and aggregators.
-3. Do or delegate, but not both.
-4. Enforce Florance Pattern where applicable.
-5. Exposure layers must have a single point of contact with business logic.
-6. Services should accept and return the same contract or primitives/aggregations of that contract.
-7. Every service validates its own inputs and outputs.
-8. Services cannot call other services at the same level.
-9. Public APIs cannot call public APIs at the same level.
-10. Flow forward only.
+0.  Services contain business logic.
+1.  Service operations break into validations, processing, and integration.
+2.  Service types break into validators, orchestrators, and aggregators.
+3.  Do or delegate, but not both.
+4.  Enforce Florance Pattern where applicable.
+5.  Exposure layers must have a single point of contact with business logic.
+6.  Services should accept and return the same contract or primitives/aggregations of that contract.
+      - Methods that has primitive inputs must consider using a contract model count exceed three.
+7.  Every service validates its own inputs and outputs.
+8.  Services cannot call other services at the same level.
+9.  Service methods cannot call other service methods at the same level.
+    - If shared logic exists, extract it to a private method that both public methods can call.
+10. Public APIs cannot call public APIs at the same level.
+11. Flow forward only.
 
 ## Foundation service rules
 
@@ -344,6 +360,9 @@ Use this skill for system design, architecture review, decomposition, refactorin
 6. They must wrap logic in TryCatch / exception-noise-cancellation.
 7. They must perform validation before dependency calls.
 8. They are the last abstraction layer before core business logic.
+9. Foundation services live under Services/Foundations.
+10. Fondation service models live under Models/Foundations/{Entity Plural}/{Entity}.cs
+11. Fondation service exceptionmodels live under Models/Foundations/{Entity Plural}/Exceptions/ 
 
 ### Validation rules
 
@@ -362,7 +381,9 @@ Use this skill for system design, architecture review, decomposition, refactorin
 
 ### Exception rules for foundation services
 
-0. Localize native exceptions.
+0. Localize native exceptions. 
+   - The data dictionary from native exception must be assigned to the localised exception's data dictionary.
+   - The inner exception of the localised exception must be the native exception when possible.
 1. Categorize exceptions into validation, dependency validation, dependency, and service exceptions.
 2. Preserve inner localized exceptions when moving upstream.
 3. Log at the appropriate severity.
@@ -381,6 +402,10 @@ Use this skill for system design, architecture review, decomposition, refactorin
 7. They may shift outcomes to primitives such as bool or int.
 8. They may combine multiple primitive routines into one higher-order routine.
 9. They map exceptions from foundation layer to processing-layer exception categories.
+10. They must localise and categorise exceptions from the foundation layer.
+11. Processing services live under Services/Processings.
+10. Processing service virtual models live under Models/Processings/{Entity Plural}/{Entity}.cs
+11. Processing service exceptionmodels live under Models/Processings/{Entity Plural}/Exceptions/ 
 
 ## Orchestration service rules
 
@@ -404,6 +429,11 @@ Use this skill for system design, architecture review, decomposition, refactorin
 14. Variants include coordination, management, and uber-management services.
 15. Keep a unit-of-work mindset.
 16. Prefer eventing when it reduces orchestration complexity safely.
+17. They map exceptions from foundation layer or processing layer to orchestration-layer exception categories.
+18. They must localise and categorise exceptions from the foundation layer or processing layer.
+19. Orchestration services live under Services/Orchestrations.
+20. Orchestration service virtual models live under Models/Orchestrations/{Entity Plural}/{Entity}.cs
+21. Orchestration service exceptionmodels live under Models/Orchestrations/{Entity Plural}/Exceptions/ 
 
 ## Aggregation service rules
 
@@ -417,6 +447,9 @@ Use this skill for system design, architecture review, decomposition, refactorin
 7. They are optional.
 8. Their dependencies must share the same contract family.
 9. They must aggregate exceptions the same way orchestration-like services do.
+10. They must localise and categorise exceptions the same way orchestration-like services do.
+11. Aggregation services lives under Services/Aggregations.
+12. Aggregation service exceptionmodels live under Models/Aggregations/{Entity Plural}/Exceptions/ 
 
 ## Exposer rules
 
@@ -601,32 +634,33 @@ RedRhino.Core.Synchronizer/
 │       ├── StorageBroker.cs               (partial class — base)
 │       └── StorageBroker.LegacyUsers.cs   (partial class — entity)
 ├── Models/
-│   ├── Persons/
-│   │   ├── Person.cs
-│   │   ├── PersonType.cs
-│   │   ├── PersonRecordState.cs
-│   │   └── Exceptions/
-│   │       ├── NullPersonException.cs
-│   │       ├── InvalidPersonException.cs
-│   │       ├── AlreadyExistsPersonException.cs
-│   │       ├── FailedPersonDependencyException.cs
-│   │       ├── FailedPersonServiceException.cs
-│   │       ├── PersonValidationException.cs
-│   │       ├── PersonDependencyException.cs
-│   │       ├── PersonDependencyValidationException.cs
-│   │       └── PersonServiceException.cs
-│   └── LegacyUsers/
-│       ├── LegacyUser.cs
-│       └── Exceptions/
-│           ├── NullLegacyUserException.cs
-│           ├── InvalidLegacyUserException.cs
-│           ├── AlreadyExistsLegacyUserException.cs
-│           ├── FailedStorageLegacyUserDependencyException.cs
-│           ├── FailedLegacyUserServiceException.cs
-│           ├── LegacyUserValidationException.cs
-│           ├── LegacyUserDependencyException.cs
-│           ├── LegacyUserDependencyValidationException.cs
-│           └── LegacyUserServiceException.cs
+│      ├── Foundations/
+│            ├── Persons/
+│            │   ├── Person.cs
+│            │   ├── PersonType.cs
+│            │   ├── PersonRecordState.cs
+│            │   └── Exceptions/
+│            │       ├── NullPersonException.cs
+│            │       ├── InvalidPersonException.cs
+│            │       ├── AlreadyExistsPersonException.cs
+│            │       ├── FailedPersonDependencyException.cs
+│            │       ├── FailedPersonServiceException.cs
+│            │       ├── PersonValidationException.cs
+│            │       ├── PersonDependencyException.cs
+│            │       ├── PersonDependencyValidationException.cs
+│            │       └── PersonServiceException.cs
+│            └── LegacyUsers/
+│                ├── LegacyUser.cs
+│                └── Exceptions/
+│                    ├── NullLegacyUserException.cs
+│                    ├── InvalidLegacyUserException.cs
+│                    ├── AlreadyExistsLegacyUserException.cs
+│                    ├── FailedStorageLegacyUserDependencyException.cs
+│                    ├── FailedLegacyUserServiceException.cs
+│                    ├── LegacyUserValidationException.cs
+│                    ├── LegacyUserDependencyException.cs
+│                    ├── LegacyUserDependencyValidationException.cs
+│                    └── LegacyUserServiceException.cs
 ├── Services/
 │   └── Foundations/
 │       ├── LegacyUsers/
@@ -783,17 +817,20 @@ that correspond to standard log levels:
 
 ### 4.1 Entity Model
 
-Entity classes are plain POCOs residing under `Models/{Entity}/`. They contain
+Entity classes are plain POCOs residing under `Models/{Service Type}/{Entity}/`. They contain
 **no behavior** — only properties. Domain comments on properties capture validation intent
 (e.g., nullable rules, email format, phone format).
 
-The `LegacyUser` class resides under `Models/LegacyUsers/`.
-The `Person` class resides under `Models/Persons/`.
+The `LegacyUser` class resides under `Models/Foundations/LegacyUsers/`.
+The `Person` class resides under `Models/Foundations/Persons/`.
 
 ### 4.2 Exception Models
 
-Exception models live in `Models/{Entity}/Exceptions/` and form a **two-tier exception
+Exception models live in `Models/{Service Type}/{Entity}/Exceptions/` and form a **two-tier exception
 hierarchy** per The Standard.
+
+The `LegacyUser` class resides under `Models/Foundations/LegacyUsers/Exceptions/`.
+The `Person` class resides under `Models/Foundations/Persons/Exceptions/`.
 
 The inner/outer exception hierarchy varies by the **type of broker** the Foundation Service
 consumes. Storage-based services (e.g., `LegacyUserService`) handle SQL/EF exceptions, while

@@ -112,6 +112,7 @@ Use it whenever deciding what to test first, how to map exceptions in tests, or 
 0. Controllers require unit tests for mapping logic.
 1. Unit-test success code mappings.
 2. Unit-test validation / dependency / service error mappings.
+3. Unit-test security i.e authorization / authentication failure mappings.
 3. Acceptance-test every endpoint.
 4. Clean up test data after acceptance tests.
 5. Emulate external resources not owned by the microservice when running acceptance tests.
@@ -148,7 +149,7 @@ Use it whenever deciding what to test first, how to map exceptions in tests, or 
 0. Mirror partial-class split in tests.
 1. Use setup/helpers in the root test file.
 2. Split tests into logic, validations, and exceptions files.
-3. Use AAA: Arrange / Act / Assert.
+3. Use GWT: Given / When / Then.
 4. Mock all dependencies.
 5. Use readable assertions.
 6. Use deep cloning to protect expectation identity.
@@ -187,12 +188,12 @@ Unit tests follow The Standard's **partial-class + three-axis** approach.
 
 Each entity's tests mirror the same partial-class split as the service:
 
-| Partial file                             | Tests                                                  |
-| ---------------------------------------- | ------------------------------------------------------ |
-| `{Entity}ServiceTests.cs`               | Setup, mocks, helpers (`CreateRandom{Entity}`, etc.)   |
-| `{Entity}ServiceTests.Logic.cs`         | Happy-path / success-case tests                        |
-| `{Entity}ServiceTests.Validations.cs`   | Validation failure tests                               |
-| `{Entity}ServiceTests.Exceptions.cs`    | Dependency & service exception tests                   |
+| Partial file                                      | Tests                                                  |
+| ------------------------------------------------- | ------------------------------------------------------ |
+| `{Entity}ServiceTests.cs`                        | Setup, mocks, helpers (`CreateRandom{Entity}`, etc.)   |
+| `{Entity}ServiceTests.Logic.{Method}.cs`         | Happy-path / success-case tests                        |
+| `{Entity}ServiceTests.Validations.{Method}.cs`   | Validation failure tests                               |
+| `{Entity}ServiceTests.Exceptions.{Method}.cs`    | Dependency & service exception tests                   |
 
 ### 8.2 Conventions
 
@@ -207,7 +208,7 @@ Each entity's tests mirror the same partial-class split as the service:
 | Verify calls         | Every test verifies broker calls (`Times.Once` / `Times.Never`) and ends with `VerifyNoOtherCalls()` |
 | Test framework       | **xUnit** — `[Fact]` for single cases, `[Theory] [InlineData]` for parameterised cases     |
 
-### 8.3 Test Pattern — AAA (Arrange / Act / Assert)
+### 8.3 Test Pattern — GWT (Given / When / Then)
 
 ```
 // given  — build input, configure mocks, construct expected exception
