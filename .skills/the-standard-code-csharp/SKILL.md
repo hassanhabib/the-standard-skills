@@ -1,6 +1,8 @@
 ---
 name: The Standard Code CSharp
 description: Enforces the C# naming, organization, method, variable, class, field, instantiation, and comment/documentation rules of The Standard.
+the standard version: v2.12.0
+skill version: v0.3.0.0
 ---
 
 # The Standard Code CSharp
@@ -630,9 +632,9 @@ We will follow a process of Uglification Beautification. We uglify our code to b
 ##### Don't
 ```csharp
 	students
-	.Where(student => student.Name is "Elbek")
-	.Select(student => student.Name)
-	.ToList();
+		.Where(student => student.Name is "Elbek")
+			.Select(student => student.Name)
+				.ToList();
 ```
 
 The first approach enforces simplifying and cutting the chaining short as more calls continues to uglify the code like this:
@@ -648,10 +650,11 @@ The uglification process forces breaking down the chains to smaller lists then p
 
 ```csharp
 	student
-	.Where(student => student.Name is "Elbek")
-	.Select(student => student.Name)
-	.OrderBy(student => student.Name)
-	.ToList();
+		.Where(student => student.Name is "Elbek")
+		.Select(student => student.Name)
+		.OrderBy(student => student.Name)
+		.ToList();
+	
 	ProcessStudents(students);
 ```
 
