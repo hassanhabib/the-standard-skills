@@ -813,6 +813,80 @@ that correspond to standard log levels:
 | `LogErrorAsync`       | Error       |
 | `LogCriticalAsync`    | Critical    |
 
+**`LoggingBroker.cs`**
+
+```csharp
+public class LoggingBroker : ILoggingBroker
+{
+    private readonly ILogger<LoggingBroker> logger;
+
+    public LoggingBroker(ILogger<LoggingBroker> logger) =>
+        this.logger = logger;
+
+    public async ValueTask LogInformationAsync(string message) =>
+        this.logger.LogInformation(message);
+
+    public async ValueTask LogTraceAsync(string message) =>
+        this.logger.LogTrace(message);
+
+    public async ValueTask LogDebugAsync(string message) =>
+        this.logger.LogDebug(message);
+
+    public async ValueTask LogWarningAsync(string message) =>
+        this.logger.LogWarning(message);
+
+    public async ValueTask LogErrorAsync(Exception exception) =>
+        this.logger.LogError(exception, exception.Message);
+
+    public async ValueTask LogCriticalAsync(Exception exception) =>
+        this.logger.LogCritical(exception, exception.Message);
+}
+```
+
+**`ILoggingBroker.cs`**
+
+```csharp
+public interface ILoggingBroker
+{
+    ValueTask LogInformationAsync(string message);
+    ValueTask LogTraceAsync(string message);
+    ValueTask LogDebugAsync(string message);
+    ValueTask LogWarningAsync(string message);
+    ValueTask LogErrorAsync(Exception exception);
+    ValueTask LogCriticalAsync(Exception exception);
+}
+```
+
+> **Rule — async expression body, no Task.Run:**
+> Each method uses the `async` keyword and delegates directly to `ILogger<T>`.
+> Never wrap the call in `Task.Run()` or `new ValueTask(Task.Run(...))`.
+> `ILogger<T>` is synchronous; wrapping it in `Task.Run()` introduces
+> unnecessary thread-pool overhead and produces an inefficient heap-allocated `ValueTask`.
+>
+> **Wrong:**
+> ```csharp
+> public ValueTask LogWarningAsync(string message) =>
+>     new ValueTask(Task.Run(() => this.logger.LogWarning(message)));
+> ```
+>
+> **Correct:**
+> ```csharp
+> public async ValueTask LogWarningAsync(string message) =>
+>     this.logger.LogWarning(message);
+> ```
+
+> **Rule — DI Registration:**
+> The logging broker must be explicitly registered in `Program.cs`.
+> `AddLogging()` (or the host builder's default) must also be present so that
+> `ILogger<LoggingBroker>` resolves correctly.
+>
+> ```csharp
+> builder.Services.AddLogging();
+> builder.Services.AddTransient<ILoggingBroker, LoggingBroker>();
+> ```
+>
+> Omitting either line causes a runtime DI resolution failure.
+
 ---
 
 ## 4. Models

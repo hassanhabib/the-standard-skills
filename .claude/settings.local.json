@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find C:UsershassaWebstormProjectsthe-standard-skills -not -path */.git/* -not -path */.idea/*)"
+      "Bash(find C:UsershassaWebstormProjectsthe-standard-skills -not -path */.git/* -not -path */.idea/*)",
+      "Bash(wc -l /c/Users/hassa/WebstormProjects/the-standard-skills/.skills/*/rules/rules.md)"
     ]
   }
 }
