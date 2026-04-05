@@ -39,6 +39,13 @@ namespace MyProject.Services.Foundations.Students
                 return await this.storageBroker.InsertStudentAsync(student);
             });
 
+        // arch-015: Asynchronization Abstraction — method returns ValueTask<IQueryable<Student>>
+        // even though the underlying call is not a network round-trip. The public contract
+        // must be uniformly async so callers never need to change if the implementation evolves.
+        public ValueTask<IQueryable<Student>> RetrieveAllStudentsAsync() =>
+            TryCatch(async () =>
+                await this.storageBroker.SelectAllStudentsAsync());
+
         public ValueTask<Student> RetrieveStudentByIdAsync(Guid studentId) =>
             TryCatch(async () =>
             {
@@ -194,15 +201,15 @@ namespace MyProject.Services.Foundations.Students
             }
             catch (NullStudentException nullStudentException)
             {
-                throw CreateAndLogValidationException(nullStudentException);
+                throw await CreateAndLogValidationException(nullStudentException);
             }
             catch (InvalidStudentException invalidStudentException)
             {
-                throw CreateAndLogValidationException(invalidStudentException);
+                throw await CreateAndLogValidationException(invalidStudentException);
             }
             catch (NotFoundStudentException notFoundStudentException)
             {
-                throw CreateAndLogValidationException(notFoundStudentException);
+                throw await CreateAndLogValidationException(notFoundStudentException);
             }
             catch (DuplicateKeyException duplicateKeyException)
             {
@@ -212,7 +219,7 @@ namespace MyProject.Services.Foundations.Students
                         innerException: duplicateKeyException);
 
                 // arch-030: DependencyValidationException for conflict errors
-                throw CreateAndLogDependencyValidationException(alreadyExistsStudentException);
+                throw await CreateAndLogDependencyValidationException(alreadyExistsStudentException);
             }
             catch (DbUpdateConcurrencyException dbUpdateConcurrencyException)
             {
@@ -221,7 +228,7 @@ namespace MyProject.Services.Foundations.Students
                         message: "Student is locked, please try again.",
                         innerException: dbUpdateConcurrencyException);
 
-                throw CreateAndLogDependencyValidationException(lockedStudentException);
+                throw await CreateAndLogDependencyValidationException(lockedStudentException);
             }
             catch (DbUpdateException dbUpdateException)
             {
@@ -231,7 +238,7 @@ namespace MyProject.Services.Foundations.Students
                         innerException: dbUpdateException);
 
                 // arch-030: DependencyException for non-critical storage errors
-                throw CreateAndLogDependencyException(failedStudentStorageException);
+                throw await CreateAndLogDependencyException(failedStudentStorageException);
             }
             catch (Exception serviceException)
             {
@@ -241,54 +248,63 @@ namespace MyProject.Services.Foundations.Students
                         innerException: serviceException);
 
                 // arch-030: ServiceException for all unexpected errors
-                throw CreateAndLogServiceException(failedStudentServiceException);
+                throw await CreateAndLogServiceException(failedStudentServiceException);
             }
         }
 
-        private StudentValidationException CreateAndLogValidationException(Xeption exception)
+        // arch-015: CreateAndLog* helpers are async because ILoggingBroker.LogErrorAsync
+        // returns ValueTask. Callers use `throw await CreateAndLog*(...)`.
+        // WRONG: private StudentValidationException CreateAndLogValidationException(...)
+        //        { this.loggingBroker.LogError(...); }
+        // CORRECT: async ValueTask<T> + await this.loggingBroker.LogErrorAsync(...)
+        private async ValueTask<StudentValidationException> CreateAndLogValidationException(
+            Xeption exception)
         {
             var studentValidationException =
                 new StudentValidationException(
                     message: "Student validation error occurred, please fix the errors and try again.",
                     innerException: exception);
 
-            this.loggingBroker.LogError(studentValidationException);
+            await this.loggingBroker.LogErrorAsync(studentValidationException);
 
             return studentValidationException;
         }
 
-        private StudentDependencyValidationException CreateAndLogDependencyValidationException(Xeption exception)
+        private async ValueTask<StudentDependencyValidationException>
+            CreateAndLogDependencyValidationException(Xeption exception)
         {
             var studentDependencyValidationException =
                 new StudentDependencyValidationException(
                     message: "Student dependency validation error occurred, fix the errors.",
                     innerException: exception);
 
-            this.loggingBroker.LogError(studentDependencyValidationException);
+            await this.loggingBroker.LogErrorAsync(studentDependencyValidationException);
 
             return studentDependencyValidationException;
         }
 
-        private StudentDependencyException CreateAndLogDependencyException(Xeption exception)
+        private async ValueTask<StudentDependencyException> CreateAndLogDependencyException(
+            Xeption exception)
         {
             var studentDependencyException =
                 new StudentDependencyException(
                     message: "Student dependency error occurred, contact support.",
                     innerException: exception);
 
-            this.loggingBroker.LogError(studentDependencyException);
+            await this.loggingBroker.LogErrorAsync(studentDependencyException);
 
             return studentDependencyException;
         }
 
-        private StudentServiceException CreateAndLogServiceException(Xeption exception)
+        private async ValueTask<StudentServiceException> CreateAndLogServiceException(
+            Xeption exception)
         {
             var studentServiceException =
                 new StudentServiceException(
                     message: "Student service error occurred, contact support.",
                     innerException: exception);
 
-            this.loggingBroker.LogError(studentServiceException);
+            await this.loggingBroker.LogErrorAsync(studentServiceException);
 
             return studentServiceException;
         }

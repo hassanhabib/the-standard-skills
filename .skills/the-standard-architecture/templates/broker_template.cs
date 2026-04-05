@@ -17,14 +17,15 @@ using Microsoft.Extensions.Configuration;
 
 // ---------------------------------------------------------------
 // StorageBroker.cs  — base partial
-// Owns configuration, migrations, and generic CRUD helpers.
-// Entity partials NEVER touch this.DbContext members directly.
+// Owns: configuration, OnConfiguring, constructor + Migrate(), generic CRUD helpers.
+// Does NOT own: DbSet<> properties — those live in entity partials.
 // ---------------------------------------------------------------
 
 namespace [Namespace].Brokers.Storages
 {
     public partial class StorageBroker : EFxceptionsContext, IStorageBroker
     {
+        // NO DbSet<> properties here. Each entity partial declares its own DbSet.
         private readonly IConfiguration configuration;
 
         public StorageBroker(IConfiguration configuration)
@@ -76,13 +77,15 @@ namespace [Namespace].Brokers.Storages
 
 // ---------------------------------------------------------------
 // StorageBroker.[Entities].cs  — entity partial
-// One file per entity. Delegates to generic helpers only.
+// One file per entity. DbSet<> lives here, not in StorageBroker.cs.
+// Delegates to generic helpers only — no direct EF calls.
 // ---------------------------------------------------------------
 
 namespace [Namespace].Brokers.Storages
 {
     public partial class StorageBroker
     {
+        // DbSet<> is declared in the entity partial, NOT in StorageBroker.cs.
         public DbSet<[Entity]> [Entities] { get; set; }
 
         public async ValueTask<[Entity]> Insert[Entity]Async([Entity] [entity]) =>

@@ -17,6 +17,8 @@ using Microsoft.Extensions.Configuration;
 
 // ---------------------------------------------------------------
 // StorageBroker.cs  — base partial
+// Owns: IConfiguration, OnConfiguring, constructor + Migrate(), private CRUD helpers.
+// Does NOT own: DbSet<> properties — each entity partial declares its own.
 // ---------------------------------------------------------------
 
 namespace MyProject.Brokers.Storages
@@ -25,6 +27,7 @@ namespace MyProject.Brokers.Storages
     // arch-004: Broker owns its configuration (IConfiguration injected here, not in entity partials)
     public partial class StorageBroker : EFxceptionsContext, IStorageBroker
     {
+        // NO DbSet<> here. DbSet<Student> Students lives in StorageBroker.Students.cs.
         private readonly IConfiguration configuration;
 
         public StorageBroker(IConfiguration configuration)
@@ -85,12 +88,16 @@ namespace MyProject.Brokers.Storages
 
 // ---------------------------------------------------------------
 // StorageBroker.Students.cs  — entity partial
+// DbSet<Student> lives HERE, not in StorageBroker.cs.
 // ---------------------------------------------------------------
 
 namespace MyProject.Brokers.Storages
 {
     public partial class StorageBroker
     {
+        // arch-014: DbSet<Entity> is declared in the entity partial only.
+        // WRONG: placing DbSet<Student> in StorageBroker.cs
+        // CORRECT: DbSet<Student> Students lives in StorageBroker.Students.cs
         public DbSet<Student> Students { get; set; }
 
         // arch-006: Infrastructure language (Insert, not Add)
