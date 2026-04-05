@@ -222,6 +222,215 @@ users/[username]/[CATEGORY]-[entity]-[action]
 
 ---
 
+## Walkthroughs
+
+These walkthroughs show the complete output an agent should produce when these skills are active. Each one covers code, naming, file structure, and — when the project is source-controlled — branching and commit discipline.
+
+---
+
+### Walkthrough 1 — Develop a Logging Broker
+
+**Prompt to the agent:**
+> "Build a LoggingBroker according to The Standard."
+
+**Step 1 — Create a branch** *(source-controlled projects only)*
+
+```bash
+git checkout -b users/{username}/BROKERS-logging-create
+```
+
+**Step 2 — Create the interface** `Brokers/Loggings/ILoggingBroker.cs`
+
+```csharp
+// ---------------------------------------------------------------
+// Copyright (c) Coalition of the Good-Hearted Engineers
+// FREE TO USE TO CONNECT THE WORLD
+// ---------------------------------------------------------------
+
+namespace MyProject.Brokers.Loggings
+{
+    public interface ILoggingBroker
+    {
+        ValueTask LogInformationAsync(string message);
+        ValueTask LogTraceAsync(string message);
+        ValueTask LogDebugAsync(string message);
+        ValueTask LogWarningAsync(string message);
+        ValueTask LogErrorAsync(Exception exception);
+        ValueTask LogCriticalAsync(Exception exception);
+    }
+}
+```
+
+**Step 3 — Create the implementation** `Brokers/Loggings/LoggingBroker.cs`
+
+```csharp
+// ---------------------------------------------------------------
+// Copyright (c) Coalition of the Good-Hearted Engineers
+// FREE TO USE TO CONNECT THE WORLD
+// ---------------------------------------------------------------
+
+namespace MyProject.Brokers.Loggings
+{
+    public class LoggingBroker : ILoggingBroker
+    {
+        private readonly ILogger<LoggingBroker> logger;
+
+        public LoggingBroker(ILogger<LoggingBroker> logger) =>
+            this.logger = logger;
+
+        public async ValueTask LogInformationAsync(string message) =>
+            this.logger.LogInformation(message);
+
+        public async ValueTask LogTraceAsync(string message) =>
+            this.logger.LogTrace(message);
+
+        public async ValueTask LogDebugAsync(string message) =>
+            this.logger.LogDebug(message);
+
+        public async ValueTask LogWarningAsync(string message) =>
+            this.logger.LogWarning(message);
+
+        public async ValueTask LogErrorAsync(Exception exception) =>
+            this.logger.LogError(exception, exception.Message);
+
+        public async ValueTask LogCriticalAsync(Exception exception) =>
+            this.logger.LogCritical(exception, exception.Message);
+    }
+}
+```
+
+> **Anti-pattern — never do this:**
+> ```csharp
+> // WRONG: Task.Run() adds thread-pool overhead for a synchronous ILogger<T> call
+> public ValueTask LogWarningAsync(string message) =>
+>     new ValueTask(Task.Run(() => this.logger.LogWarning(message)));
+> ```
+
+**Step 4 — Register in `Program.cs`**
+
+```csharp
+builder.Services.AddLogging();
+builder.Services.AddTransient<ILoggingBroker, LoggingBroker>();
+```
+
+**Step 5 — Commit** *(source-controlled projects only)*
+
+```
+BROKERS: LoggingBroker - Add logging broker and interface
+```
+
+---
+
+### Walkthrough 2 — Develop a Foundation Service for Student (with TDD)
+
+**Prompt to the agent:**
+> "Build a Foundation Service for Student according to The Standard."
+
+The agent executes a strict **FAIL → PASS** commit cycle for every test. Each `FAIL` commit contains a genuinely failing test. Each `PASS` commit contains minimum implementation that makes the full suite green.
+
+**Step 1 — Create a branch** *(source-controlled projects only)*
+
+```bash
+git checkout -b users/{username}/FOUNDATIONS-student-create
+```
+
+**Step 2 — Scaffold the partial files**
+
+```
+Services/Foundations/Students/
+├── IStudentService.cs
+├── StudentService.cs                  (partial — constructor, public methods)
+├── StudentService.Validations.cs      (partial — Validate* and IsInvalid* methods)
+└── StudentService.Exceptions.cs       (partial — TryCatch delegate, CreateAndLog* helpers)
+
+Tests.Unit/Services/Foundations/Students/
+├── StudentServiceTests.cs             (partial — setup, mocks, helpers)
+├── StudentServiceTests.Logic.Add.cs
+├── StudentServiceTests.Validations.Add.cs
+└── StudentServiceTests.Exceptions.Add.cs
+```
+
+**Step 3 — FAIL/PASS cycle (one commit pair per test)**
+
+```
+FAIL: ShouldAddStudentAsync
+PASS: ShouldAddStudentAsync
+
+FAIL: ShouldThrowValidationExceptionOnAddIfStudentIsNullAndLogItAsync
+PASS: ShouldThrowValidationExceptionOnAddIfStudentIsNullAndLogItAsync
+
+FAIL: ShouldThrowValidationExceptionOnAddIfStudentIsInvalidAndLogItAsync
+PASS: ShouldThrowValidationExceptionOnAddIfStudentIsInvalidAndLogItAsync
+
+FAIL: ShouldThrowDependencyValidationExceptionOnAddIfStudentAlreadyExistsAndLogItAsync
+PASS: ShouldThrowDependencyValidationExceptionOnAddIfStudentAlreadyExistsAndLogItAsync
+
+FAIL: ShouldThrowDependencyExceptionOnAddIfSqlErrorOccurredAndLogItAsync
+PASS: ShouldThrowDependencyExceptionOnAddIfSqlErrorOccurredAndLogItAsync
+
+FAIL: ShouldThrowServiceExceptionOnAddIfServiceErrorOccurredAndLogItAsync
+PASS: ShouldThrowServiceExceptionOnAddIfServiceErrorOccurredAndLogItAsync
+```
+
+> **Rule — FAIL commits must be verified red before committing.**
+> Run the test suite and confirm the new test fails. Never commit a `FAIL` without
+> seeing the test runner report a genuine failure. Never commit a `PASS` without
+> seeing the full suite green.
+
+**Step 4 — Pull Request** *(source-controlled projects only)*
+
+```
+FOUNDATIONS: Student - Add foundation service with Add operation
+```
+
+---
+
+## Agent Compliance Model
+
+The skills in this repository use two complementary instruction styles. Understanding the distinction helps you extend or troubleshoot them.
+
+### Declarative rules — describe *what* compliance looks like
+
+```json
+{ "id": "arch-009", "description": "All broker methods must be asynchronous." }
+```
+
+Rules validate outputs. An agent checks generated code against them. They work well for structural properties that can be inspected at rest (naming, layer boundaries, method signatures).
+
+### Procedural sequences — describe *how* to achieve compliance
+
+```
+1. Write the failing test.
+2. Run the suite — verify RED. Stop if it does not fail.
+3. Write minimum implementation.
+4. Run the suite — verify GREEN. Stop if any test fails.
+5. Commit PASS.
+6. Move to the next test.
+```
+
+Procedures govern workflows that have *ordering* and *checkpoints*. The FAIL/PASS commit cycle, branch creation, and PR formatting all require an agent to execute steps in sequence, not just check a property.
+
+### Conditional guards — apply practices only when applicable
+
+Git and commit practices apply **if and only if the project is source-controlled.** The practices skill activates these procedures only when a `.git` directory is detected (or equivalent VCS metadata exists). Without source control, the agent produces code only — no branch, no commits, no PR.
+
+```
+IF .git exists:
+  → Create branch following users/{username}/{CATEGORY}-{entity}-{action}
+  → Alternate FAIL/PASS commits per test
+  → Format PR title as [CATEGORY]: [Entity] - [Description]
+ELSE:
+  → Generate code only
+```
+
+### Why this matters
+
+An agent that knows only declarative rules can generate correct code but produce it all in one shot with no branch and no FAIL/PASS history. An agent that also follows the procedural sequences produces an auditable engineering trail — one that looks like it was built by a disciplined team, commit by commit.
+
+Both instruction styles are required to fully operationalize The Standard.
+
+---
+
 ## Skill Structure
 
 Each skill is a self-contained, composable package following a consistent layout:

@@ -63,3 +63,41 @@ namespace MyProject.Brokers
         }
     }
 }
+
+// ---------------------------------------------------------------
+// BAD EXAMPLE: Non-Standard Logging Broker
+// ---------------------------------------------------------------
+
+namespace MyProject.Brokers.Loggings
+{
+    public class LoggingBroker : ILoggingBroker
+    {
+        private readonly ILogger<LoggingBroker> logger;
+
+        public LoggingBroker(ILogger<LoggingBroker> logger) =>
+            this.logger = logger;
+
+        // VIOLATION arch-009: Task.Run() wraps a synchronous ILogger<T> call,
+        //   producing a heap-allocated Task and introducing thread-pool overhead
+        //   for no benefit. ILogger<T> is already synchronous — no offloading needed.
+        //   Use `async ValueTask` + direct call instead.
+        public ValueTask LogWarningAsync(string message) =>
+            new ValueTask(Task.Run(() => this.logger.LogWarning(message)));
+
+        // VIOLATION arch-009: Same Task.Run() anti-pattern on every method.
+        public ValueTask LogErrorAsync(Exception exception) =>
+            new ValueTask(Task.Run(() => this.logger.LogError(exception, exception.Message)));
+
+        public ValueTask LogCriticalAsync(Exception exception) =>
+            new ValueTask(Task.Run(() => this.logger.LogCritical(exception, exception.Message)));
+
+        public ValueTask LogInformationAsync(string message) =>
+            new ValueTask(Task.Run(() => this.logger.LogInformation(message)));
+
+        public ValueTask LogTraceAsync(string message) =>
+            new ValueTask(Task.Run(() => this.logger.LogTrace(message)));
+
+        public ValueTask LogDebugAsync(string message) =>
+            new ValueTask(Task.Run(() => this.logger.LogDebug(message)));
+    }
+}
