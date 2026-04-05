@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find C:UsershassaWebstormProjectsthe-standard-skills -not -path */.git/* -not -path */.idea/*)"
+    ]
+  }
+}
