@@ -319,6 +319,13 @@ builder.Services.AddTransient<ILoggingBroker, LoggingBroker>();
 BROKERS: LoggingBroker - Add logging broker and interface
 ```
 
+**Step 6 — Pull Request (source-controlled projects only)**
+
+```bash
+git push -u origin users/{username}/BROKERS-logging-create
+gh pr create --base main --head users/{username}/BROKERS-logging-create --title "BROKERS: LoggingBroker - Add logging broker and interface" --body "Closes #{issue number}"
+```
+
 ---
 
 ### Walkthrough 2 — Develop a Foundation Service for Student (with TDD)
@@ -379,8 +386,9 @@ PASS: ShouldThrowServiceExceptionOnAddIfServiceErrorOccurredAndLogItAsync
 
 **Step 4 — Pull Request** *(source-controlled projects only)*
 
-```
-FOUNDATIONS: Student - Add foundation service with Add operation
+```bash
+git push -u origin users/{username}/FOUNDATIONS-student-create
+gh pr create --base main --head users/{username}/FOUNDATIONS-student-create --title "FOUNDATIONS: Student - Add foundation service with Add operation" --body "Closes #{issue number}"
 ```
 
 ---
@@ -457,10 +465,11 @@ skill-name/
 
 ## Installation
 
+Run this command to install the skills globally or scoped to your solution/project
+
 ```bash
 npx skills add hassanhabib/the-standard-skills
 ```
-
 ---
 
 ## References
