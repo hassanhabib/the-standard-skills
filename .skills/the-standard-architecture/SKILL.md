@@ -312,6 +312,51 @@ Use this skill for system design, architecture review, decomposition, refactorin
 18. Broker configurations live in appsettings.json or equivalent configuration stores
 19. Broker configuration classes live under Brokers/ and their namespaces.
 
+### Asynchronization Abstraction (§1.5.1)
+
+Every publicly exposed interface method — on brokers, services, and exposers — must
+return `ValueTask` or `ValueTask<T>`, **even if the current implementation does not
+internally await anything**.
+
+This is The Standard §1.5.1: the public contract is uniformly async so callers never
+need to change if an implementation later becomes truly asynchronous.
+
+| Pattern | Verdict |
+|---|---|
+| `public async ValueTask LogWarningAsync(string message) => this.logger.LogWarning(message);` | **Correct** — async keyword, direct call |
+| `public ValueTask<IQueryable<Student>> SelectAllStudentsAsync() => ValueTask.FromResult(...)` | **Correct** — ValueTask.FromResult wraps sync result |
+| `public async ValueTask<IQueryable<Student>> SelectAllStudentsAsync() => await this.SelectAllAsync<Student>();` | **Correct** — async/await through generic helper |
+| `public IQueryable<Student> SelectAllStudents() => this.Students.AsNoTracking();` | **WRONG** — synchronous, no ValueTask |
+| `public ValueTask LogWarningAsync(string message) => new ValueTask(Task.Run(() => ...));` | **WRONG** — Task.Run wraps a synchronous call needlessly |
+
+**Consequence for services:** `CreateAndLog*` helpers must be async too, because
+`ILoggingBroker.LogErrorAsync` returns `ValueTask`. Catch blocks must use `throw await`:
+
+```csharp
+// WRONG
+private StudentValidationException CreateAndLogValidationException(Xeption exception)
+{
+    ...
+    this.loggingBroker.LogError(studentValidationException);  // no such sync method
+    return studentValidationException;
+}
+
+// CORRECT
+private async ValueTask<StudentValidationException> CreateAndLogValidationException(
+    Xeption exception)
+{
+    var studentValidationException = new StudentValidationException(...);
+    await this.loggingBroker.LogErrorAsync(studentValidationException);
+    return studentValidationException;
+}
+
+// CORRECT call site in TryCatch
+catch (NullStudentException nullStudentException)
+{
+    throw await CreateAndLogValidationException(nullStudentException);
+}
+```
+
 ### Broker clarifications
 
 0. Brokers are broader than repositories.
@@ -717,9 +762,18 @@ Brokers are **thin wrappers** around external resources. They contain **zero bus
 
 **Base partial — `StorageBroker.cs`**
 
+This file owns: `IConfiguration`, `OnConfiguring`, the constructor (with `Database.Migrate()`),
+and private generic CRUD helpers. It owns **nothing else**.
+
+> **arch-014 — No `DbSet<>` in the base partial.**
+> `DbSet<Student> Students` lives in `StorageBroker.Students.cs`, not here.
+> The base partial must never declare entity-specific members.
+
 ```csharp
 public partial class StorageBroker : EFxceptionsContext, IStorageBroker
 {
+    // No DbSet<> properties here. Each entity partial declares its own.
+
     private readonly IConfiguration configuration;
 
     public StorageBroker(IConfiguration configuration)
@@ -773,9 +827,12 @@ public partial class StorageBroker : EFxceptionsContext, IStorageBroker
 
 **Entity partial — `StorageBroker.Students.cs`**
 
+> **arch-014:** `DbSet<Student>` is declared here — in the entity partial — not in `StorageBroker.cs`.
+
 ```csharp
 public partial class StorageBroker
 {
+    // DbSet<Student> belongs in this entity partial file, not in StorageBroker.cs.
     public DbSet<Student> Students { get; set; }
 
     public async ValueTask<Student> InsertStudentAsync(Student student) =>

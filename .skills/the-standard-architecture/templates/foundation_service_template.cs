@@ -36,14 +36,12 @@ namespace [Namespace].Services.Foundations.[Entities]
                 return await this.storageBroker.Insert[Entity]Async([entity]);
             });
 
-        public ValueTask<IQueryable<[Entity]>> RetrieveAll[Entities]() =>
-            TryCatch(() =>
-            {
-                IQueryable<[Entity]> all[Entities] =
-                    this.storageBroker.SelectAll[Entities]();
-
-                return ValueTask.FromResult(all[Entities]);
-            });
+        // arch-015: Even though SelectAll does not require a network round-trip,
+        // the method must return ValueTask<IQueryable<T>> to honour the
+        // Asynchronization Abstraction principle (§1.5.1 of The Standard).
+        public ValueTask<IQueryable<[Entity]>> RetrieveAll[Entities]Async() =>
+            TryCatch(async () =>
+                await this.storageBroker.SelectAll[Entities]Async());
 
         public ValueTask<[Entity]> Retrieve[Entity]ByIdAsync(Guid [entity]Id) =>
             TryCatch(async () =>
@@ -235,15 +233,15 @@ namespace [Namespace].Services.Foundations.[Entities]
             }
             catch (Null[Entity]Exception null[Entity]Exception)
             {
-                throw CreateAndLogValidationException(null[Entity]Exception);
+                throw await CreateAndLogValidationException(null[Entity]Exception);
             }
             catch (Invalid[Entity]Exception invalid[Entity]Exception)
             {
-                throw CreateAndLogValidationException(invalid[Entity]Exception);
+                throw await CreateAndLogValidationException(invalid[Entity]Exception);
             }
             catch (NotFound[Entity]Exception notFound[Entity]Exception)
             {
-                throw CreateAndLogValidationException(notFound[Entity]Exception);
+                throw await CreateAndLogValidationException(notFound[Entity]Exception);
             }
             catch (DuplicateKeyException duplicateKeyException)
             {
@@ -252,7 +250,7 @@ namespace [Namespace].Services.Foundations.[Entities]
                         message: "[Entity] with the same id already exists.",
                         innerException: duplicateKeyException);
 
-                throw CreateAndLogDependencyValidationException(alreadyExists[Entity]Exception);
+                throw await CreateAndLogDependencyValidationException(alreadyExists[Entity]Exception);
             }
             catch (DbUpdateConcurrencyException dbUpdateConcurrencyException)
             {
@@ -261,7 +259,7 @@ namespace [Namespace].Services.Foundations.[Entities]
                         message: "[Entity] record is locked, please try again.",
                         innerException: dbUpdateConcurrencyException);
 
-                throw CreateAndLogDependencyValidationException(locked[Entity]Exception);
+                throw await CreateAndLogDependencyValidationException(locked[Entity]Exception);
             }
             catch (DbUpdateException dbUpdateException)
             {
@@ -270,7 +268,7 @@ namespace [Namespace].Services.Foundations.[Entities]
                         message: "Failed [entity] storage error occurred, contact support.",
                         innerException: dbUpdateException);
 
-                throw CreateAndLogDependencyException(failed[Entity]StorageException);
+                throw await CreateAndLogDependencyException(failed[Entity]StorageException);
             }
             catch (Exception serviceException)
             {
@@ -279,55 +277,60 @@ namespace [Namespace].Services.Foundations.[Entities]
                         message: "Unexpected service error occurred. Contact support.",
                         innerException: serviceException);
 
-                throw CreateAndLogServiceException(failed[Entity]ServiceException);
+                throw await CreateAndLogServiceException(failed[Entity]ServiceException);
             }
         }
 
-        private [Entity]ValidationException CreateAndLogValidationException(Xeption exception)
+        // arch-015: CreateAndLog* helpers are async because ILoggingBroker.LogErrorAsync
+        // returns ValueTask. Callers in TryCatch use `throw await CreateAndLog*(...)`.
+        private async ValueTask<[Entity]ValidationException> CreateAndLogValidationException(
+            Xeption exception)
         {
             var [entity]ValidationException =
                 new [Entity]ValidationException(
                     message: "[Entity] validation error occurred, fix the errors and try again.",
                     innerException: exception);
 
-            this.loggingBroker.LogError([entity]ValidationException);
+            await this.loggingBroker.LogErrorAsync([entity]ValidationException);
 
             return [entity]ValidationException;
         }
 
-        private [Entity]DependencyValidationException CreateAndLogDependencyValidationException(
-            Xeption exception)
+        private async ValueTask<[Entity]DependencyValidationException>
+            CreateAndLogDependencyValidationException(Xeption exception)
         {
             var [entity]DependencyValidationException =
                 new [Entity]DependencyValidationException(
                     message: "[Entity] dependency validation error occurred, fix the errors.",
                     innerException: exception);
 
-            this.loggingBroker.LogError([entity]DependencyValidationException);
+            await this.loggingBroker.LogErrorAsync([entity]DependencyValidationException);
 
             return [entity]DependencyValidationException;
         }
 
-        private [Entity]DependencyException CreateAndLogDependencyException(Xeption exception)
+        private async ValueTask<[Entity]DependencyException> CreateAndLogDependencyException(
+            Xeption exception)
         {
             var [entity]DependencyException =
                 new [Entity]DependencyException(
                     message: "[Entity] dependency error occurred, contact support.",
                     innerException: exception);
 
-            this.loggingBroker.LogError([entity]DependencyException);
+            await this.loggingBroker.LogErrorAsync([entity]DependencyException);
 
             return [entity]DependencyException;
         }
 
-        private [Entity]ServiceException CreateAndLogServiceException(Xeption exception)
+        private async ValueTask<[Entity]ServiceException> CreateAndLogServiceException(
+            Xeption exception)
         {
             var [entity]ServiceException =
                 new [Entity]ServiceException(
                     message: "[Entity] service error occurred, contact support.",
                     innerException: exception);
 
-            this.loggingBroker.LogError([entity]ServiceException);
+            await this.loggingBroker.LogErrorAsync([entity]ServiceException);
 
             return [entity]ServiceException;
         }
