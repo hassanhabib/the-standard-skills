@@ -4,41 +4,111 @@
 // ---------------------------------------------------------------
 
 // GOOD EXAMPLE: Standard-compliant Storage Broker
-// Demonstrates: local interface, no flow control, no exception handling,
-// infrastructure language, async methods, owns configuration.
+// Demonstrates: local interface, partial class split, generic CRUD helpers in base partial,
+// entity partials delegate to helpers only (no direct DbSet/DbContext access),
+// Database.Migrate() in constructor, all methods async ValueTask.
 
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using EFxceptions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+
+// ---------------------------------------------------------------
+// StorageBroker.cs  — base partial
+// ---------------------------------------------------------------
 
 namespace MyProject.Brokers.Storages
 {
     // arch-001: Implements a local interface
-    public partial class StorageBroker : DbContext, IStorageBroker
+    // arch-004: Broker owns its configuration (IConfiguration injected here, not in entity partials)
+    public partial class StorageBroker : EFxceptionsContext, IStorageBroker
     {
-        // arch-004: Broker owns its configuration
         private readonly IConfiguration configuration;
 
         public StorageBroker(IConfiguration configuration)
         {
             this.configuration = configuration;
-            Database.Migrate();
+
+            // arch-004: Broker owns migration — Database.Migrate() runs at construction.
+            // This must NOT be omitted; omitting it means the schema is never applied.
+            this.Database.Migrate();
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            string connectionString =
+                this.configuration.GetConnectionString("DefaultConnection");
+
+            optionsBuilder.UseSqlServer(connectionString);
+        }
+
+        // Generic CRUD helpers — entity partials NEVER call this.Entry(), this.Set<T>(),
+        // this.FindAsync(), or this.SaveChangesAsync() directly. They use these helpers only.
+        // This keeps entity partials decoupled from the concrete EF implementation.
+
+        private async ValueTask<T> InsertAsync<T>(T entity) where T : class
+        {
+            this.Entry(entity).State = EntityState.Added;
+            await this.SaveChangesAsync();
+
+            return entity;
+        }
+
+        // SelectAllAsync<T>: wraps IQueryable in a ValueTask so the entity partial
+        // can use the uniform `async/await` pattern across all operations.
+        // AsNoTracking() is applied here — entity partials must not add it themselves.
+        private ValueTask<IQueryable<T>> SelectAllAsync<T>() where T : class =>
+            ValueTask.FromResult<IQueryable<T>>(this.Set<T>().AsNoTracking());
+
+        private async ValueTask<T> SelectAsync<T>(Guid entityId) where T : class =>
+            await this.FindAsync<T>(entityId);
+
+        private async ValueTask<T> UpdateAsync<T>(T entity) where T : class
+        {
+            this.Entry(entity).State = EntityState.Modified;
+            await this.SaveChangesAsync();
+
+            return entity;
+        }
+
+        private async ValueTask<T> DeleteAsync<T>(T entity) where T : class
+        {
+            this.Entry(entity).State = EntityState.Deleted;
+            await this.SaveChangesAsync();
+
+            return entity;
+        }
+    }
+}
+
+// ---------------------------------------------------------------
+// StorageBroker.Students.cs  — entity partial
+// ---------------------------------------------------------------
+
+namespace MyProject.Brokers.Storages
+{
+    public partial class StorageBroker
+    {
+        public DbSet<Student> Students { get; set; }
+
         // arch-006: Infrastructure language (Insert, not Add)
-        // arch-009: Async method
+        // arch-009: Async ValueTask
         // arch-002: No flow control
         // arch-003: No exception handling — raw exceptions propagate to service
         public async ValueTask<Student> InsertStudentAsync(Student student) =>
             await this.InsertAsync(student);
 
-        // arch-006: Infrastructure language (Select, not Retrieve)
-        public IQueryable<Student> SelectAllStudents() =>
-            this.SelectAll<Student>();
+        // arch-006: Infrastructure language (SelectAll, not RetrieveAll)
+        // arch-009: Async ValueTask<IQueryable<T>> — NOT synchronous IQueryable<T>
+        // WRONG:  public IQueryable<Student> SelectAllStudents() => this.Students.AsNoTracking();
+        // WRONG:  public IQueryable<Student> SelectAllStudents() => this.SelectAll<Student>();
+        // CORRECT: delegate to SelectAllAsync<T>() helper — do NOT touch this.Students directly
+        public async ValueTask<IQueryable<Student>> SelectAllStudentsAsync() =>
+            await this.SelectAllAsync<Student>();
 
         // arch-006: Infrastructure language (Select, not Retrieve)
-        // arch-009: Async
         public async ValueTask<Student> SelectStudentByIdAsync(Guid studentId) =>
             await this.SelectAsync<Student>(studentId);
 
@@ -53,18 +123,25 @@ namespace MyProject.Brokers.Storages
 }
 
 // ---------------------------------------------------------------
-// Interface (also good)
+// IStorageBroker.Students.cs  — entity interface partial
 // ---------------------------------------------------------------
 
 namespace MyProject.Brokers.Storages
 {
-    // arch-001: Local interface pattern I{Resource}Broker
-    public interface IStorageBroker
+    // arch-001: Local interface — I{Resource}Broker
+    public partial interface IStorageBroker
     {
         ValueTask<Student> InsertStudentAsync(Student student);
-        IQueryable<Student> SelectAllStudents();
+        ValueTask<IQueryable<Student>> SelectAllStudentsAsync();
         ValueTask<Student> SelectStudentByIdAsync(Guid studentId);
         ValueTask<Student> UpdateStudentAsync(Student student);
         ValueTask<Student> DeleteStudentAsync(Student student);
     }
 }
+
+// ---------------------------------------------------------------
+// Program.cs — DI registration
+// ---------------------------------------------------------------
+//
+// builder.Services.AddDbContext<StorageBroker>();
+// builder.Services.AddTransient<IStorageBroker, StorageBroker>();
