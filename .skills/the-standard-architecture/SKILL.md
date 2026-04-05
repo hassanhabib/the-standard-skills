@@ -712,8 +712,8 @@ Brokers are **thin wrappers** around external resources. They contain **zero bus
 | Base class           | `EFxceptionsContext` (from the **EFxceptions** library — wraps `DbContext` with meaningful EF exceptions) |
 | Interface            | `partial interface IStorageBroker` — split per entity                                                    |
 | Class                | `partial class StorageBroker` — split per entity                                                         |
-| Generic CRUD helpers | Private `InsertAsync<T>()` on the base partial for reuse across entities                                 |
-| Configuration        | Reads `DefaultConnection` from `IConfiguration`; calls `Database.Migrate()` at construction              |
+| Generic CRUD helpers | Private helpers in base partial: `InsertAsync<T>`, `SelectAllAsync<T>`, `SelectAsync<T>`, `UpdateAsync<T>`, `DeleteAsync<T>` |
+| Configuration        | Reads `DefaultConnection` from `IConfiguration`; calls `this.Database.Migrate()` at construction        |
 
 **Base partial — `StorageBroker.cs`**
 
@@ -725,31 +725,90 @@ public partial class StorageBroker : EFxceptionsContext, IStorageBroker
     public StorageBroker(IConfiguration configuration)
     {
         this.configuration = configuration;
+
+        // arch-011: Must be called — applies pending migrations at startup.
+        // Omitting this means the schema is never applied.
         this.Database.Migrate();
     }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        string connectionString =
+            this.configuration.GetConnectionString("DefaultConnection");
+
+        optionsBuilder.UseSqlServer(connectionString);
+    }
+
+    // arch-012: All EF operations live here. Entity partials call these helpers only.
     private async ValueTask<T> InsertAsync<T>(T entity) where T : class
     {
         this.Entry(entity).State = EntityState.Added;
         await this.SaveChangesAsync();
         return entity;
     }
+
+    // SelectAllAsync<T> wraps IQueryable in a ValueTask so all entity methods
+    // follow the uniform async/await pattern. AsNoTracking() is applied here.
+    private ValueTask<IQueryable<T>> SelectAllAsync<T>() where T : class =>
+        ValueTask.FromResult<IQueryable<T>>(this.Set<T>().AsNoTracking());
+
+    private async ValueTask<T> SelectAsync<T>(Guid entityId) where T : class =>
+        await this.FindAsync<T>(entityId);
+
+    private async ValueTask<T> UpdateAsync<T>(T entity) where T : class
+    {
+        this.Entry(entity).State = EntityState.Modified;
+        await this.SaveChangesAsync();
+        return entity;
+    }
+
+    private async ValueTask<T> DeleteAsync<T>(T entity) where T : class
+    {
+        this.Entry(entity).State = EntityState.Deleted;
+        await this.SaveChangesAsync();
+        return entity;
+    }
 }
 ```
 
-**Entity partial — `StorageBroker.LegacyUsers.cs`**
+**Entity partial — `StorageBroker.Students.cs`**
 
 ```csharp
 public partial class StorageBroker
 {
-    public DbSet<LegacyUser> LegacyUsers { get; set; }
+    public DbSet<Student> Students { get; set; }
 
-    public async ValueTask<LegacyUser> InsertLegacyUserAsync(LegacyUser legacyUser) =>
-        await InsertAsync(legacyUser);
+    public async ValueTask<Student> InsertStudentAsync(Student student) =>
+        await this.InsertAsync(student);
+
+    // arch-009: SelectAll* must be async ValueTask<IQueryable<T>>.
+    // WRONG:   public IQueryable<Student> SelectAllStudents() => this.Students.AsNoTracking();
+    // WRONG:   public IQueryable<Student> SelectAllStudents() => this.Set<Student>();
+    // CORRECT: delegate to SelectAllAsync<T>() — never touch DbSet or EF members directly.
+    public async ValueTask<IQueryable<Student>> SelectAllStudentsAsync() =>
+        await this.SelectAllAsync<Student>();
+
+    public async ValueTask<Student> SelectStudentByIdAsync(Guid studentId) =>
+        await this.SelectAsync<Student>(studentId);
+
+    public async ValueTask<Student> UpdateStudentAsync(Student student) =>
+        await this.UpdateAsync(student);
+
+    public async ValueTask<Student> DeleteStudentAsync(Student student) =>
+        await this.DeleteAsync(student);
 }
 ```
 
 > **Rule:** Each entity gets its own partial file for both the interface and the class.
+>
+> **Rule — scope before scaffolding (arch-013):** A branch named `BROKERS-student-insert`
+> implements **only** `InsertStudentAsync`. If the prompt is ambiguous about which
+> operations are needed, the agent must ask before creating the branch or writing any code.
+> A single broker branch = a single operation.
+>
+> **Rule — branch action language (prac-016):** Broker branch actions use infrastructure
+> verbs — `insert`, `select-all`, `select-by-id`, `update`, `delete`. Never use business
+> verbs (`add`, `retrieve`, `modify`, `remove`) in a `BROKERS` branch name.
 
 ### 3.2 API Broker
 

@@ -131,11 +131,55 @@ The following is a step-by-step example of this workflow:
 
 For branch names we can apply the following naming convention: `users/[username]/[category]-[entity]-[action]`
 
-The variables can be subsituted
-* `[username]` => your github username
+The variables can be substituted:
+* `[username]` => your GitHub username
 * `[category]` => the category that you are working on
 * `[entity]` => the entity that your service / broker uses
-* `[action]` => the action
+* `[action]` => the action — **must match the language of the layer being worked on**
+
+##### Branch action language by layer
+
+The `[action]` segment uses the vocabulary of the layer, not a generic description:
+
+| Layer | Correct actions | Wrong actions |
+|---|---|---|
+| `BROKERS` | `insert`, `select-all`, `select-by-id`, `update`, `delete` | `add`, `retrieve`, `modify`, `remove` |
+| `FOUNDATIONS` | `add`, `retrieve-all`, `retrieve-by-id`, `modify`, `remove` | `insert`, `select`, `update`, `delete` |
+| `PROCESSINGS` | `ensure`, `upsert`, `try-add`, `try-remove` | infrastructure verbs |
+| `INFRA`, `DATA`, `CONFIG` | `create`, `setup`, `update`, `remove` | (no strict language constraint) |
+
+**Examples:**
+
+```
+# Correct — infrastructure verb for a BROKERS branch
+users/hassanhabib/BROKERS-student-insert
+users/hassanhabib/BROKERS-student-select-all
+users/hassanhabib/BROKERS-student-select-by-id
+users/hassanhabib/BROKERS-student-update
+users/hassanhabib/BROKERS-student-delete
+
+# Correct — business verb for a FOUNDATIONS branch
+users/hassanhabib/FOUNDATIONS-student-add
+users/hassanhabib/FOUNDATIONS-student-retrieve-all
+users/hassanhabib/FOUNDATIONS-student-modify
+
+# Wrong — business verb in a BROKERS branch
+users/hassanhabib/BROKERS-student-add        ← should be 'insert'
+users/hassanhabib/BROKERS-student-retrieve   ← should be 'select-by-id' or 'select-all'
+```
+
+##### One operation per branch
+
+Each branch represents a single operation. When a prompt is ambiguous about scope
+(e.g., "build a storage broker for Student"), the agent **must ask which operation(s)
+to implement** before creating the branch or writing any code. It must not assume
+all CRUD should be scaffolded.
+
+```
+Ambiguous prompt:  "Build a storage broker for Student"
+Required response: "Which operation should this branch implement?
+                   insert / select-all / select-by-id / update / delete"
+```
 
 ### 4.1.1.3 Category List
 

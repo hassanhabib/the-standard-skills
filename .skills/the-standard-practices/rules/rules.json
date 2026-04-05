@@ -9,6 +9,8 @@
     { "id": "prac-013", "category": "branch-naming", "description": "[entity] must identify the entity or resource being worked on.", "severity": "error" },
     { "id": "prac-014", "category": "branch-naming", "description": "[action] must describe the specific action being performed.", "severity": "error" },
     { "id": "prac-015", "category": "branch-naming", "description": "Branch name parts must be separated by / between users/username/ and the category block.", "severity": "error" },
+    { "id": "prac-016", "category": "branch-naming", "description": "Branch [action] must use the language appropriate to the layer: broker branches use infrastructure verbs (insert, select-all, select-by-id, update, delete); service branches use business verbs (add, retrieve-all, retrieve-by-id, modify, remove). Never mix layers — a BROKERS branch must not use 'add' or 'retrieve'.", "severity": "error" },
+    { "id": "prac-017", "category": "branch-naming", "description": "One branch represents one operation. When a prompt is ambiguous about scope, the agent must ask which specific operation to implement before creating the branch or generating any code.", "severity": "error" },
     { "id": "prac-020", "category": "categories", "description": "Category must accurately reflect the type of work being done.", "severity": "error" },
     { "id": "prac-021", "category": "categories", "description": "Size suffix reflects test count: MAJOR=5+, MEDIUM=3-4, MINOR=1-2.", "severity": "error" },
     { "id": "prac-022", "category": "categories", "description": "When unsure between MAJOR/MEDIUM/MINOR, choose based on tests added or modified.", "severity": "warning" },
