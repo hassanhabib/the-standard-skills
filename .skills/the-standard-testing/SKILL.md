@@ -44,6 +44,97 @@ Use it whenever deciding what to test first, how to map exceptions in tests, or 
 
 ## Validation testing rules
 
+### Validation Source of Truth
+
+0. Validation rules MUST be inferred from all authoritative sources:
+   - Foundation service business rules
+   - Storage-layer configuration (`StorageBroker.[Entity].Configurations.cs`)
+   - Domain expectations implied by usage
+
+1. The storage configuration represents **minimum enforced constraints**:
+   - Required vs optional
+   - Maximum length
+   - Minimum length (if configured)
+   - Precision / scale / format where applicable
+
+2. Foundation services represent **the enforcement boundary**:
+   - All constraints that can cause persistence failure MUST be validated before reaching storage
+   - Validation must prevent database exceptions where deterministically possible
+
+### Validation Alignment Rules
+
+0. Foundation validation MUST be **equal to or stricter than** storage constraints.
+
+1. The following are **ALLOWED (strengthening rules)**:
+   - Storage: optional → Foundation: required
+   - Storage: optional → Foundation: constrained (min/max length)
+   - Storage: max length → Foundation: smaller max length
+
+2. The following are **NOT ALLOWED (weakening or missing rules)**:
+   - Storage: required → Foundation: not validated as required
+   - Storage: max length → Foundation: no length validation
+
+3. Violations of alignment MUST be treated as:
+   - A design defect
+   - A test failure condition
+   - A review blocker
+
+### Validation Responsibility Rule
+
+0. The database MUST NOT be relied upon to enforce:
+   - Required field validation
+   - Length validation
+   - Format validation
+
+1. The ONLY acceptable database-enforced constraints without prior validation are:
+   - Foreign key constraints
+   - Uniqueness / duplicate key constraints
+   - Concurrency constraints
+
+2. Any validation that can be performed deterministically in the foundation service MUST be performed there
+
+
+### Validation Test Derivation from Storage Configuration
+
+0. Storage configuration (`StorageBroker.[Entity].Configurations.cs`) defines **constraints**, not validation behavior.
+
+1. For every constraint defined in storage configuration, there MUST exist a corresponding validation rule in the foundation service:
+   - Required fields
+   - Length constraints (min/max)
+   - Precision / format constraints where applicable
+
+2. Validation tests MUST:
+   - Target the **foundation service validation methods only**
+   - NOT directly test storage configuration behavior
+   - Prove that each storage-defined constraint is enforced at the foundation layer
+
+3. For each property constraint, validation tests MUST focus on constraint violations and boundary breaches:
+
+   - Invalid case (violates constraint) → FAIL
+     - Required field missing / null
+     - Value exceeding maximum length
+     - Value below minimum length (if applicable)
+
+   - Boundary violation cases:
+     - Just above maximum → FAIL
+     - Just below minimum → FAIL (if applicable)
+
+4. Valid scenarios (within acceptable range) are covered by logic tests and MUST NOT be redundantly tested in validation tests.
+
+5. Missing alignment between storage configuration and foundation validation MUST be treated as:
+   - A design defect
+   - A test failure condition
+   - A review blocker
+
+6. Automation MAY assist in identifying constraints (e.g., via EF metadata), but:
+   - Generated tests MUST still validate foundation behavior
+   - Automation MUST NOT result in tests that validate the database layer directly
+
+7. All validation tests MUST:
+   - Follow Standard naming conventions
+   - Be explicit and intention-revealing
+
+
 ### Validation order
 
 0. Structural validations first.
