@@ -476,6 +476,8 @@ These rules ensure:
    - Localisation MUST be verified (no native exceptions exposed)
    - Data preservation MUST be verified on local exceptions
    - Validation exceptions MUST contain full error details in inner exception
+   - From processing service layer upwards, validation exceptions and dependency validation exceptions from its dependencies rewrap to [Entity][Layer]DependencyValidationExceptions 
+   - From processing service layer upwards, dependency exceptions and service exceptions from its dependencies rewrap to [Entity][Layer]DependencyExceptions
 
 1. Validation tests MUST assert:
    - Correct local exception type
@@ -505,15 +507,22 @@ These rules ensure:
    - Rewrapping into processing-level exception
    - Inner exception preservation
 
+1. Tests SHOULD:
+   - Use `[Theory]` to test multiple dependency validation exceptions of the same type in one test   
+   - Use `[Theory]` to test multiple dependency exceptions of the same type in one test
+   - Avoid duplication by testing multiple cases in a single test method
+
 ---
 
 ### Orchestration Exception Tests (Enforcement)
 
 0. Tests MUST assert:
+   - Rewrapping into orchestration-level exception   
    - Inner exception is preserved (local exception)
    - Categorical exception is replaced at orchestration level
 
 1. Tests SHOULD:
+   - Use `[Theory]` to test multiple dependency validation exceptions of the same type in one test   
    - Use `[Theory]` to test multiple dependency exceptions of the same type in one test
    - Avoid duplication by testing multiple cases in a single test method
 

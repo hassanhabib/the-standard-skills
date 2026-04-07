@@ -64,6 +64,7 @@ namespace [Namespace].Tests.Unit.Services.Foundations.[Entities]
 
             filler.Setup()
                 .OnType<DateTimeOffset>().Use(dateTimeOffset);
+                // Add .OnProperty([entity] => [entity].NavigationProperty).IgnoreIt(); for navigation properties
 
             return filler;
         }

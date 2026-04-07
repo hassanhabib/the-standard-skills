@@ -184,11 +184,19 @@ namespace [Namespace].Tests.Unit.Services.Foundations.[Entities]
             // given
             [Entity] some[Entity] = CreateRandom[Entity]();
             var httpResponseBadRequestException = new HttpResponseBadRequestException();
+            
+            httpResponseBadRequestException.Data.Add(
+                key: nameof([Entity].Id),
+                values: "Id is required");
 
+            //**test-111** [ERROR] All external/native exceptions must be localized.
+            //**test-112** [ERROR] Localized exceptions must preserve external/native exceptions as the InnerException.
+            //**test-113** [ERROR] Localized exceptions must carry the Data collection from the original exception.
             var invalidPost[Entity]Exception =
                 new Invalid[Entity]Exception(
                     message: "Invalid [entity] error occurred, fix errors and try again.",
-                    innerException: httpResponseBadRequestException);
+                    innerException: httpResponseBadRequestException,
+                    data: httpResponseBadRequestException.Data);
 
             var expected[Entity]DependencyValidationException =
                 new [Entity]DependencyValidationException(
