@@ -1,7 +1,7 @@
 ---
 name: The Standard Testing
 description: Enforces Standard TDD discipline, validation testing, exception mapping, controller acceptance tests, and UI component testing.
-the standard version: v2.12.0
+the standard version: v2.13.0
 skill version: v0.3.0.0
 ---
 

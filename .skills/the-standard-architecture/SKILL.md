@@ -1,7 +1,7 @@
 ---
 name: The Standard Architecture
 description: Enforces Standard-compliant modeling, brokers, services, aggregation, exposers, REST APIs, and UI architecture.
-the standard version: v2.12.0
+the standard version: v2.13.0
 skill version: v0.3.0.0
 ---
 

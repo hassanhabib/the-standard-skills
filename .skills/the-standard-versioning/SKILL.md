@@ -1,7 +1,7 @@
 ---
 name: The Standard Versioning
 description: Enforces Standard Versioning discipline.
-the standard version: v2.12.0
+the standard version: v2.13.0
 skill version: v0.3.0.0
 ---
 

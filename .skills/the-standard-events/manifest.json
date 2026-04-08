@@ -2,7 +2,7 @@
   "name": "the-standard-events",
   "version": "1.0.0",
   "description": "Governs event-driven architecture under The Standard: CulDeSac pattern, LeVent-backed event brokers, foundation event services, validation, exception mapping, file structure, naming conventions, and test structure for publish and subscribe operations.",
-  "the_standard_version": "v2.12.0",
+  "the_standard_version": "v2.13.0",
   "skill_version": "v0.1.0.0",
 
   "inputs": [

@@ -1,7 +1,7 @@
 ---
 name: The Standard Events
 description: Enforces Standard event-driven architecture using the CulDeSac pattern, event brokers, foundation event services, validation, exception handling, and event service testing.
-the standard version: v2.12.0
+the standard version: v2.13.0
 skill version: v0.1.0.0
 ---
 
