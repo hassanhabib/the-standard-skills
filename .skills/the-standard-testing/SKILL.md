@@ -44,6 +44,97 @@ Use it whenever deciding what to test first, how to map exceptions in tests, or 
 
 ## Validation testing rules
 
+### Validation Source of Truth
+
+0. Validation rules MUST be inferred from all authoritative sources:
+   - Foundation service business rules
+   - Storage-layer configuration (`StorageBroker.[Entity].Configurations.cs`)
+   - Domain expectations implied by usage
+
+1. The storage configuration represents **minimum enforced constraints**:
+   - Required vs optional
+   - Maximum length
+   - Minimum length (if configured)
+   - Precision / scale / format where applicable
+
+2. Foundation services represent **the enforcement boundary**:
+   - All constraints that can cause persistence failure MUST be validated before reaching storage
+   - Validation must prevent database exceptions where deterministically possible
+
+### Validation Alignment Rules
+
+0. Foundation validation MUST be **equal to or stricter than** storage constraints.
+
+1. The following are **ALLOWED (strengthening rules)**:
+   - Storage: optional → Foundation: required
+   - Storage: optional → Foundation: constrained (min/max length)
+   - Storage: max length → Foundation: smaller max length
+
+2. The following are **NOT ALLOWED (weakening or missing rules)**:
+   - Storage: required → Foundation: not validated as required
+   - Storage: max length → Foundation: no length validation
+
+3. Violations of alignment MUST be treated as:
+   - A design defect
+   - A test failure condition
+   - A review blocker
+
+### Validation Responsibility Rule
+
+0. The database MUST NOT be relied upon to enforce:
+   - Required field validation
+   - Length validation
+   - Format validation
+
+1. The ONLY acceptable database-enforced constraints without prior validation are:
+   - Foreign key constraints
+   - Uniqueness / duplicate key constraints
+   - Concurrency constraints
+
+2. Any validation that can be performed deterministically in the foundation service MUST be performed there
+
+
+### Validation Test Derivation from Storage Configuration
+
+0. Storage configuration (`StorageBroker.[Entity].Configurations.cs`) defines **constraints**, not validation behavior.
+
+1. For every constraint defined in storage configuration, there MUST exist a corresponding validation rule in the foundation service:
+   - Required fields
+   - Length constraints (min/max)
+   - Precision / format constraints where applicable
+
+2. Validation tests MUST:
+   - Target the **foundation service validation methods only**
+   - NOT directly test storage configuration behavior
+   - Prove that each storage-defined constraint is enforced at the foundation layer
+
+3. For each property constraint, validation tests MUST focus on constraint violations and boundary breaches:
+
+   - Invalid case (violates constraint) → FAIL
+     - Required field missing / null
+     - Value exceeding maximum length
+     - Value below minimum length (if applicable)
+
+   - Boundary violation cases:
+     - Just above maximum → FAIL
+     - Just below minimum → FAIL (if applicable)
+
+4. Valid scenarios (within acceptable range) are covered by logic tests and MUST NOT be redundantly tested in validation tests.
+
+5. Missing alignment between storage configuration and foundation validation MUST be treated as:
+   - A design defect
+   - A test failure condition
+   - A review blocker
+
+6. Automation MAY assist in identifying constraints (e.g., via EF metadata), but:
+   - Generated tests MUST still validate foundation behavior
+   - Automation MUST NOT result in tests that validate the database layer directly
+
+7. All validation tests MUST:
+   - Follow Standard naming conventions
+   - Be explicit and intention-revealing
+
+
 ### Validation order
 
 0. Structural validations first.
@@ -256,3 +347,206 @@ For storage-based services, steps 4–7 are replaced with the corresponding SQL/
 | `xunit`                | Unit test framework                               |
 
 ---
+
+## Exception Handling Principles
+
+### 0. Scope
+
+These rules govern exception design, localisation, categorisation, propagation, and testing across all service layers.
+
+---
+
+### 1. Localisation (MANDATORY)
+
+0. External (non-local) exceptions MUST be localised at the boundary (Foundation).
+1. Native exceptions (SQL, HTTP, SDK) MUST NOT cross service boundaries.
+2. Localisation MUST convert native exceptions into domain-specific exceptions.
+
+**Data Preservation (MANDATORY)**
+
+3. ALL relevant data from the external exception MUST be copied to the local exception:
+   - `Data` dictionary
+   - Constraint / validation metadata
+   - Identifiers / keys
+
+4. The localised exception MUST carry this data so that:
+   - The **immediate inner exception** contains full validation detail after categorisation.
+
+---
+
+### 2. Categorisation
+
+0. All exceptions MUST be categorised into one of:
+   - Validation
+   - DependencyValidation
+   - Dependency
+   - Service
+
+1. Categorisation defines upstream handling and exposer mapping.
+
+---
+
+### 3. Propagation (Unwrap / Rewrap)
+
+Each service layer MUST:
+
+0. Catch downstream exceptions  
+1. UNWRAP the categorical exception  
+2. PRESERVE the LOCAL exception  
+3. REWRAP into its OWN categorical exception  
+
+This prevents leakage of lower-layer concerns and enforces layer contracts.
+
+---
+
+### 4. Inner Exception Preservation (MANDATORY)
+
+0. The original local exception MUST always be preserved as the inner exception.
+1. No layer may discard or replace the local exception.
+
+This guarantees:
+- Traceability
+- Correct exposer mapping (e.g. HTTP Conflict / FailedDependency)
+- Retention of validation data
+
+---
+
+### 5. Layer Responsibilities
+
+#### Foundation
+0. Localise external exceptions  
+1. Populate local exception data  
+2. Categorise into Validation / DependencyValidation / Dependency / Service  
+
+#### Processing
+0. MUST ONLY handle categorised exceptions  
+1. MUST NOT depend on foundation exception types  
+2. MUST rewrap into processing-level exceptions  
+
+#### Orchestration
+0. MUST handle exceptions from all dependencies  
+1. MUST unify into a single categorical exception per type  
+2. MUST unwrap and preserve inner exceptions  
+
+---
+
+### 6. Catch-All (MANDATORY)
+
+0. Every service MUST implement:
+   - `catch (Exception)`
+1. MUST map to ServiceException
+
+This prevents leakage of unknown failures.
+
+---
+
+### 7. Logging
+
+0. Each layer MUST log BEFORE rethrowing  
+1. MUST log the categorised exception only  
+
+---
+
+### 8. Testing
+
+#### Orchestration Exception Tests
+
+0. SHOULD use `[Theory]`  
+1. MUST cover multiple dependency exception types in a single test  
+2. MUST avoid duplication  
+
+---
+
+### 9. Design Intent
+
+These rules ensure:
+
+0. Full abstraction from external systems  
+1. Stable layer contracts  
+2. Simplified exposer logic  
+3. Complete validation visibility at the local exception level  
+
+---
+
+## Exception Handling Cross-References (Enforcement)
+
+### Validation Testing Alignment
+
+0. All validation tests MUST align with Exception Handling Principles:
+   - Localisation MUST be verified (no native exceptions exposed)
+   - Data preservation MUST be verified on local exceptions
+   - Validation exceptions MUST contain full error details in inner exception
+   - From processing service layer upwards, validation exceptions and dependency validation exceptions from its dependencies rewrap to [Entity][Layer]DependencyValidationExceptions 
+   - From processing service layer upwards, dependency exceptions and service exceptions from its dependencies rewrap to [Entity][Layer]DependencyExceptions
+
+1. Validation tests MUST assert:
+   - Correct local exception type
+   - Correct categorised exception type
+   - Inner exception contains validation data (Data dictionary populated)
+
+---
+
+### Foundation Exception Tests (Enforcement)
+
+0. Tests MUST verify localisation:
+   - Native exception → Local exception → Categorised exception
+
+1. Tests MUST verify:
+   - External exception data is copied to local exception
+   - Local exception is preserved as inner exception
+
+2. Tests MUST NOT allow:
+   - Native exception leakage
+   - Missing Data dictionary propagation
+
+---
+
+### Processing Exception Tests (Enforcement)
+
+0. Tests MUST assert:
+   - Rewrapping into processing-level exception
+   - Inner exception preservation
+
+1. Tests SHOULD:
+   - Use `[Theory]` to test multiple dependency validation exceptions of the same type in one test   
+   - Use `[Theory]` to test multiple dependency exceptions of the same type in one test
+   - Avoid duplication by testing multiple cases in a single test method
+
+---
+
+### Orchestration Exception Tests (Enforcement)
+
+0. Tests MUST assert:
+   - Rewrapping into orchestration-level exception   
+   - Inner exception is preserved (local exception)
+   - Categorical exception is replaced at orchestration level
+
+1. Tests SHOULD:
+   - Use `[Theory]` to test multiple dependency validation exceptions of the same type in one test   
+   - Use `[Theory]` to test multiple dependency exceptions of the same type in one test
+   - Avoid duplication by testing multiple cases in a single test method
+
+---
+
+### Catch-All Enforcement
+
+0. Tests MUST verify:
+   - Unknown exceptions are mapped to ServiceException
+   - No raw Exception escapes any service layer
+
+---
+
+### Logging Enforcement
+
+0. Tests MUST verify:
+   - Logging occurs before exception is thrown
+   - Logged exception is the categorised exception
+
+---
+
+### Design Integrity Rule
+
+0. Any violation of exception handling principles MUST be treated as:
+   - A design defect
+   - A test failure
+   - A review blocker

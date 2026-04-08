@@ -17,6 +17,9 @@
 **test-014** [ERROR] Test dependency validations fifth (broker-specific failures).
 **test-015** [ERROR] Test dependency exceptions sixth (storage/API errors).
 **test-016** [ERROR] Test service exceptions seventh (catch-all unexpected errors).
+**test-017** [ERROR] All services must validate their input parameters before executing any business logic.
+**test-018** [ERROR] Services must validate output data when it is reused within the same routine.
+**test-019** [ERROR] Validation order must be: structural → logical → external → dependency.
 
 ## VALIDATION TYPES
 
@@ -25,6 +28,9 @@
 **test-022** [ERROR] Continuous validations use upsertable exception data (`UpsertDataList`).
 **test-023** [ERROR] Continuous validations use dynamic rules: `{ Condition = ..., Message = ... }`.
 **test-024** [ERROR] Hybrid continuous validations: validate parent object before validating child properties.
+**test-025** [ERROR] Validations must prevent deterministic failures before reaching external dependencies or storage.
+**test-026** [ERROR] Validation must not rely on downstream systems (e.g., databases) to enforce constraints.
+**test-027** [ERROR] Validation errors must be aggregated and thrown once using a single validation exception.
 
 ## FOUNDATION SERVICE TESTS
 
@@ -35,6 +41,9 @@
 **test-034** [ERROR] Use deep cloning (DeepCloner) to prevent shared state between input, expected, and actual objects.
 **test-035** [ERROR] Use randomized data (Tynamix.ObjectFiller) — never use hard-coded test values.
 **test-036** [ERROR] Use `Xeption.SameExceptionAs()` for exception equality comparison.
+**test-037** [ERROR] Foundation services are the primary validation boundary and must enforce all deterministic validations.
+**test-038** [ERROR] Foundation validations must be equal to or stricter than storage constraints.
+**test-039** [ERROR] Foundation services must validate required fields, length, format, and all persistence constraints.
 
 ## PROCESSING SERVICE TESTS
 
@@ -43,6 +52,11 @@
 **test-042** [ERROR] Test shifter operations: entity → bool, entity → count.
 **test-043** [ERROR] Test combination operations: retrieve+add (EnsureExists), retrieve+modify (Upsert).
 **test-044** [ERROR] Test exception mapping from foundation exceptions to processing exceptions.
+**test-045** [ERROR] Processing services must perform used-data-only validation.
+**test-046** [ERROR] Processing services must validate only data required for their logic.
+**test-047** [ERROR] Processing services must not revalidate full entity constraints handled by foundation services.
+**test-048** [ERROR] Processing services must validate required identifiers and null checks.
+**test-049** [ERROR] Processing services must rely on foundation services for full validation enforcement.
 
 ## ORCHESTRATION SERVICE TESTS
 
@@ -50,12 +64,20 @@
 **test-051** [ERROR] Test call order when the flow depends on it — use explicit sequence or natural order.
 **test-052** [ERROR] Prefer natural order (input/output encoding) over mock-sequence style verification.
 **test-053** [ERROR] Verify orchestration-level exception wrapping and unwrapping.
+**test-054** [ERROR] Orchestration services must perform structural validation only.
+**test-055** [ERROR] Orchestration services must validate input existence and required identifiers.
+**test-056** [ERROR] Orchestration services must not perform full entity validation.
+**test-057** [ERROR] Orchestration services must delegate validation to downstream services.
+**test-058** [ERROR] Orchestration services must validate only data required for their logic.
 
 ## AGGREGATION SERVICE TESTS
 
 **test-060** [ERROR] Do NOT test dependency call order in aggregation service tests.
 **test-061** [ERROR] Do NOT use mock-sequence style order assertions for aggregation services.
 **test-062** [ERROR] Test only basic structural validations and the exposure-level aggregation behavior.
+**test-063** [ERROR] Aggregation services must perform minimal validation.
+**test-064** [ERROR] Aggregation services must validate only input existence and required properties.
+**test-065** [ERROR] Aggregation services must not perform business or domain validation.
 
 ## CONTROLLER/PROTOCOL TESTS
 
@@ -97,13 +119,37 @@
   0. `ShouldAdd{Entity}Async`
   1. `ShouldThrowValidationExceptionOnAddIf{Entity}IsNullAndLogItAsync`
   2. `ShouldThrowValidationExceptionOnAddIf{Entity}IsInvalidAndLogItAsync`
-  3. `ShouldThrowDependencyValidationExceptionOnAddIfBadRequestErrorOccursAndLogItAsync`
-  4. `ShouldThrowDependencyValidationExceptionOnAddIfConflictErrorOccursAndLogItAsync`
-  5. `ShouldThrowCriticalDependencyExceptionOnAddIfUnauthorizedErrorOccursAndLogItAsync`
-  6. `ShouldThrowCriticalDependencyExceptionOnAddIfForbiddenErrorOccursAndLogItAsync`
-  7. `ShouldThrowCriticalDependencyExceptionOnAddIfNotFoundErrorOccursAndLogItAsync`
-  8. `ShouldThrowCriticalDependencyExceptionOnAddIfUrlNotFoundErrorOccursAndLogItAsync`
-  9. `ShouldThrowDependencyExceptionOnAddIfInternalServerErrorOccursAndLogItAsync`
-  10. `ShouldThrowDependencyExceptionOnAddIfServiceUnavailableErrorOccursAndLogItAsync`
-  11. `ShouldThrowCriticalDependencyExceptionOnAddIfHttpRequestErrorOccursAndLogItAsync`
-  12. `ShouldThrowServiceExceptionOnAddIfServiceErrorOccursAndLogItAsync`
+  3. `ShouldThrowValidationExceptionOnAddIf{Entity}HasIsInvalidLengthPropertiesAndLogItAsync` (if applicable)
+  4. `ShouldThrowDependencyValidationExceptionOnAddIfBadRequestErrorOccursAndLogItAsync`
+  5. `ShouldThrowDependencyValidationExceptionOnAddIfConflictErrorOccursAndLogItAsync`
+  6. `ShouldThrowCriticalDependencyExceptionOnAddIfUnauthorizedErrorOccursAndLogItAsync`
+  7. `ShouldThrowCriticalDependencyExceptionOnAddIfForbiddenErrorOccursAndLogItAsync`
+  8. `ShouldThrowCriticalDependencyExceptionOnAddIfNotFoundErrorOccursAndLogItAsync`
+  9. `ShouldThrowCriticalDependencyExceptionOnAddIfUrlNotFoundErrorOccursAndLogItAsync`
+  10. `ShouldThrowDependencyExceptionOnAddIfInternalServerErrorOccursAndLogItAsync`
+  11. `ShouldThrowDependencyExceptionOnAddIfServiceUnavailableErrorOccursAndLogItAsync`
+  12. `ShouldThrowCriticalDependencyExceptionOnAddIfHttpRequestErrorOccursAndLogItAsync`
+  13. `ShouldThrowServiceExceptionOnAddIfServiceErrorOccursAndLogItAsync`
+
+**Note:** Similar patterns with layer-appropriate variations apply to other methods (Modify, Remove, Retrieve) and other service layers (Processing, Orchestration, Aggregation).
+
+
+## EXCEPTION TESTING
+
+**test-111** [ERROR] All external/native exceptions must be localized into custom exceptions before leaving the service boundary.
+**test-112** [ERROR] Localized exceptions must preserve external/native exceptions as the InnerException on the localized exception.
+**test-113** [ERROR] Localized exceptions must carry the Data collection from the original exception.
+**test-114** [ERROR] Services must only catch dependency-level exceptions relevant to their layer.
+**test-115** [ERROR] Catch-all exceptions must be mapped to ServiceException.
+**test-116** [ERROR] Exceptions must be logged before being thrown when logging is applicable.
+**test-117** [ERROR] Exception handling must use a centralized TryCatch pattern per service.
+**test-121** [ERROR] From processing service layer upwards, validation exceptions from dependencies must be rewrapped as `[Entity][Layer]DependencyValidationException`.
+**test-122** [ERROR] From processing service layer upwards, dependency validation exceptions from dependencies must be rewrapped as `[Entity][Layer]DependencyValidationException`.
+**test-123** [ERROR] From processing service layer upwards, dependency exceptions from dependencies must be rewrapped as `[Entity][Layer]DependencyException`.
+**test-124** [ERROR] From processing service layer upwards, service exceptions from dependencies must be rewrapped as `[Entity][Layer]DependencyException`.
+
+## VALIDATION EXCEPTIONS
+
+**test-118** [ERROR] Validation failures must result in ValidationException.
+**test-119** [ERROR] Validation exceptions must include aggregated error details in the Data dictionary.
+**test-120** [ERROR] Validation exceptions must follow localisation and categorisation rules.
