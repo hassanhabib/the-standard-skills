@@ -69,7 +69,7 @@ namespace [Namespace].Services.Foundations.[Entity]Events
 using System;
 using System.Threading.Tasks;
 using [Namespace].Models.Services.Foundations.[Entity]Events;
-using [Namespace].Models.Services.Foundations.[Entity]Events.Exceptions;
+using [Namespace].Models.Foundations.[Entity]Events.Exceptions;
 
 namespace [Namespace].Services.Foundations.[Entity]Events
 {

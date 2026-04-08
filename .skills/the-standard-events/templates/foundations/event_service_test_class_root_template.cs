@@ -6,23 +6,24 @@
 
 using System;
 using Moq;
-using Standardly.Core.Brokers.Events;
-using Standardly.Core.Models.Services.Foundations.ProcessedEvents;
-using Standardly.Core.Services.Foundations.ProcessedEvents;
+using [Namespace].Brokers.Events;
+using [Namespace].Models.Services.Foundations.[Entity]Events;
+using [Namespace].Services.Foundations.[Entity]Events;
 using Tynamix.ObjectFiller;
 
-namespace Standardly.Core.Tests.Unit.Services.Foundations.ProcessedEvents
+namespace [Namespace].Tests.Unit.Services.Foundations.[Entity]Events
 {
-    public partial class ProcessedEventServiceTests
+    public partial class [Entity]
+EventServiceTests
     {
         private readonly Mock<IEventBroker> eventBrokerMock;
-        private readonly IProcessedEventService processedEventService;
+        private readonly I[Entity]EventService [entity]EventService;
 
-        public ProcessedEventServiceTests()
+        public [Entity]EventServiceTests()
         {
             this.eventBrokerMock = new Mock<IEventBroker>();
 
-            this.processedEventService = new ProcessedEventService(
+            this.[entity]EventService = new [Entity]EventService(
                 eventBroker: this.eventBrokerMock.Object);
         }
 
@@ -35,18 +36,18 @@ namespace Standardly.Core.Tests.Unit.Services.Foundations.ProcessedEvents
         private static string GetRandomString() =>
             new MnemonicString(wordCount: GetRandomNumber()).GetValue();
 
-        private static Processed CreateRandomProcessed(DateTimeOffset? dateTimeOffset = null) =>
-            CreateProcessedFiller(dateTimeOffset ?? GetRandomDateTimeOffset()).Create();
+        private static [Entity] CreateRandom[Entity](DateTimeOffset? dateTimeOffset = null) =>
+            Create[Entity]Filler(dateTimeOffset ?? GetRandomDateTimeOffset()).Create();
 
-        private static Filler<Processed> CreateProcessedFiller(DateTimeOffset dateTimeOffset)
+        private static Filler<[Entity]> Create[Entity]Filler(DateTimeOffset dateTimeOffset)
         {
-            var filler = new Filler<Processed>();
+            var filler = new Filler<[Entity]>();
 
             filler.Setup()
                 .OnType<DateTimeOffset>().Use(dateTimeOffset)
                 .OnProperty(borough => borough.Message).Use(GetRandomString())
                 .OnProperty(borough => borough.Status).Use(GetRandomString())
-                .OnProperty(borough => borough.ProcessedItems).Use(GetRandomNumber())
+                .OnProperty(borough => borough.[Entity]Items).Use(GetRandomNumber())
                 .OnProperty(borough => borough.TotalItems).Use(GetRandomNumber());
 
             return filler;

@@ -53,7 +53,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using [Namespace].Models.Services.Foundations.[Entity]Events;
-using [Namespace].Models.Services.Foundations.[Entity]Events.Exceptions;
+using [Namespace].Models.Foundations.[Entity]Events.Exceptions;
 using Xunit;
 
 namespace [Namespace].Tests.Unit.Services.Foundations.[Entity]Events
@@ -103,7 +103,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using [Namespace].Models.Services.Foundations.[Entity]Events;
-using [Namespace].Models.Services.Foundations.[Entity]Events.Exceptions;
+using [Namespace].Models.Foundations.[Entity]Events.Exceptions;
 using Xeptions;
 using Xunit;
 
