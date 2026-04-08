@@ -21,6 +21,19 @@
     "the-standard-core"
   ],
 
+  "related_skills": [
+    {
+      "skill": "the-standard-events",
+      "relationship": "extended-by",
+      "when": "CulDeSac eventing is chosen -- event broker, event service, publish/subscribe, DI registration, and startup activation"
+    },
+    {
+      "skill": "the-standard-versioning",
+      "relationship": "extended-by",
+      "when": "a model, service, or API contract change is introduced, a release is being cut, or existing code must be deprecated"
+    }
+  ],
+
   "activation": {
     "trigger": "when designing systems, creating services, reviewing architecture, or writing brokers/controllers",
     "note": "Always activate the-standard-core first."
