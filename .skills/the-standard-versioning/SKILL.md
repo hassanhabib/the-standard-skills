@@ -156,9 +156,9 @@ This pattern means:
 - the new model version lives in a nested `V1` folder
 - the version number becomes explicit in both folder and type name
 
-### Service Changes
+### Model-Driven Service Changes
 
-When a service changes, a new versioned service MUST be created under a version folder that is a subfolder of the original location.
+When a model changes, the corresponding service MUST also be versioned under the same model version folder.
 
 Example:
 
@@ -174,6 +174,32 @@ Example:
 Models/Foundations/Students/V1/Exceptions/
 ```
 
+### Service Behavior Versioning
+
+When the **behavior** of a service changes without any change to the underlying model, the service file is versioned to reflect that behavioral evolution. Behavior changes include modifying validation rules, making a previously optional field required, or altering business logic.
+
+If the model is still at V0 and only the service behavior changes, the versioned service file is placed at the service location root with a behavior version suffix — no version folder is created:
+
+```text
+Services/Foundations/Students/StudentServiceV1.cs
+```
+
+If the model has already been versioned (e.g., V1) and the service behavior changes, the versioned service file is placed inside the model's version folder with both the model version and the behavior version in the name:
+
+```text
+Services/Foundations/Students/V1/StudentV1ServiceV1.cs
+```
+
+### Combined Model and Behavior Changes
+
+When both the model and the service behavior change together in the same release, only the model version increments. The behavior version resets to V0, implied by its absence from the file name. A new model always means new service behavior by definition, so the behavior version returns to its baseline:
+
+```text
+Services/Foundations/Students/V2/StudentV2Service.cs
+```
+
+The behavior version suffix is absent, signaling that the behavior version is V0 for this new model version. The cycle can then repeat as further behavior changes are introduced.
+
 ### File Rules
 
 0. No version folder means **V0 is implied**.
@@ -182,7 +208,7 @@ Models/Foundations/Students/V1/Exceptions/
 
 2. A model change MUST produce a versioned model file under a `Vn` subfolder.
 
-3. A service change MUST produce a versioned service file under a `Vn` subfolder.
+3. A model change MUST produce a versioned service file under the matching `Vn` subfolder. A service behavior-only change MUST produce a versioned service file at the service location root using the behavior version as a suffix — no new version folder is created.
 
 4. Versioned exceptions MUST live beneath the corresponding versioned model path.
 
@@ -193,12 +219,18 @@ Models/Foundations/Students/V1/Exceptions/
 Versioned file/type naming MUST follow this pattern:
 
 - model → `{Entity}V{n}.cs`
-- service → `{Entity}V{n}Service.cs`
+- service with model version only → `{Entity}V{n}Service.cs`
+- service with behavior version only → `{Entity}ServiceV{n}.cs`
+- service with both model and behavior versions → `{Entity}V{m}ServiceV{n}.cs`
 
-Examples:
+The behavior version always appears as a **suffix after the service name**. When both a model change and a behavior change occur in the same release, the behavior version resets to V0 and is implied by its absence from the file name.
 
-- `StudentV1.cs`
-- `StudentV1Service.cs`
+| Scenario | Example file name |
+|---|---|
+| Model V1, no behavior version | `StudentV1Service.cs` |
+| No model version, behavior V1 | `StudentServiceV1.cs` |
+| Model V1, behavior V1 | `StudentV1ServiceV1.cs` |
+| Model V2 introduced (behavior resets to V0) | `StudentV2Service.cs` |
 
 ---
 
