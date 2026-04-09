@@ -13,9 +13,12 @@
 
 **version-010** [ERROR] Default version is V0 — version is inferred and MUST NOT be included in the filename.
 **version-011** [ERROR] Model changes MUST require creation of a new Vn folder (e.g., V1, V2).
-**version-012** [ERROR] Service changes MUST require creation of a new Vn folder.
+**version-012** [ERROR] Model-driven service changes MUST create a new service file in the model's Vn folder (e.g., `Services/.../V{n}/{Entity}V{n}Service.cs`).
 **version-013** [ERROR] Previous version files MUST NOT be overwritten — always create new versioned folders.
 **version-014** [ERROR] File versioning MUST be applied to maintain backward compatibility.
+**version-015** [ERROR] Service behavior-only changes (model still at V0) MUST produce a file named `{Entity}ServiceV{n}.cs` at the service location root — no version folder is created.
+**version-016** [ERROR] When a versioned model's service behavior changes, the service MUST be named `{Entity}V{m}ServiceV{n}.cs` inside the model's `V{m}` folder.
+**version-017** [ERROR] When model and service behavior change together in the same release, the behavior version MUST be absent from the file name — only the model version increments and the behavior version is implied as V0.
 
 ## API VERSIONING (Route Versioning)
 

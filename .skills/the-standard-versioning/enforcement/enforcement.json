@@ -38,23 +38,30 @@
       ]
     },
     "versioned_file_location_validator": {
-      "rules": ["version-011", "version-012", "version-013"],
-      "description": "Validates versioned files are in correct V{n} subfolder",
+      "rules": ["version-011", "version-012", "version-013", "version-015", "version-016"],
+      "description": "Validates versioned files are in correct location",
       "severity": "critical",
       "automation": "pre-commit hook",
       "checks": [
         "versioned model: Models/.../V{n}/{Entity}V{n}.cs",
-        "versioned service: Services/.../V{n}/{Entity}V{n}Service.cs",
+        "model-driven versioned service: Services/.../V{n}/{Entity}V{n}Service.cs",
+        "behavior-only versioned service: Services/.../{Entity}ServiceV{n}.cs (no version folder)",
+        "model+behavior versioned service: Services/.../V{m}/{Entity}V{m}ServiceV{n}.cs",
         "versioned exceptions: Models/.../V{n}/Exceptions/"
       ]
     },
     "file_naming_validator": {
-      "description": "Validates versioned file naming convention",
+      "rules": ["version-015", "version-016", "version-017"],
+      "description": "Validates versioned file naming convention for all scenarios",
       "severity": "critical",
       "automation": "pre-commit hook",
       "checks": [
         "model files match pattern: {Entity}V{n}.cs",
-        "service files match pattern: {Entity}V{n}Service.cs"
+        "service with model version only matches pattern: {Entity}V{n}Service.cs",
+        "service with behavior version only matches pattern: {Entity}ServiceV{n}.cs (no version folder)",
+        "service with model and behavior versions matches pattern: {Entity}V{m}ServiceV{n}.cs",
+        "behavior version always appears as suffix after service name",
+        "when model and behavior change together, behavior version is absent from file name (V0 implied)"
       ]
     },
     "additive_versioning_validator": {

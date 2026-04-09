@@ -20,17 +20,24 @@ Each item is binary: PASS or FAIL.
 
 - [ ] **version-010** Initial files (V0) exist without version folder.
 - [ ] **version-011** New model version creates `Models/.../V{n}/{Entity}V{n}.cs`.
-- [ ] **version-012** New service version creates `Services/.../V{n}/{Entity}V{n}Service.cs`.
+- [ ] **version-012** Model-driven service change creates `Services/.../V{n}/{Entity}V{n}Service.cs` (service file in model's Vn folder).
 - [ ] **version-013** Versioned exceptions exist at `Models/.../V{n}/Exceptions/`.
 - [ ] **version-014** Earlier-version files remain available (additive, not destructive).
+- [ ] **version-015** Service behavior-only change creates `Services/.../{Entity}ServiceV{n}.cs` at service location root (no version folder).
+- [ ] **version-016** Model-versioned service with behavior change creates `Services/.../V{m}/{Entity}V{m}ServiceV{n}.cs`.
+- [ ] **version-017** When model and behavior change together, behavior version is absent from file name (V0 implied) — only model version increments.
 
 ---
 
 ## FILE NAMING
 
 - [ ] **File naming** Model files follow pattern `{Entity}V{n}.cs`.
-- [ ] **File naming** Service files follow pattern `{Entity}V{n}Service.cs`.
+- [ ] **File naming** Service with model version only follows pattern `{Entity}V{n}Service.cs`.
+- [ ] **version-015** Service with behavior version only follows pattern `{Entity}ServiceV{n}.cs` (no version folder).
+- [ ] **version-016** Service with model and behavior versions follows pattern `{Entity}V{m}ServiceV{n}.cs`.
+- [ ] **version-017** When model and behavior change together, behavior version is absent from file name (V0 implied).
 - [ ] **File location** Vn folders are subfolders of original V0 location.
+- [ ] **File location** Behavior-only service versioning does NOT create a new version folder.
 
 ---
 
