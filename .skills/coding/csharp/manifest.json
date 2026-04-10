@@ -2,7 +2,7 @@
   "name": "the-standard-code-csharp",
   "version": "1.0.0",
   "description": "Enforces The Standard's C# coding style rules: file naming, variable naming and organization, method naming and organization, class naming, field conventions, instantiation rules, and comment formats. Applies to all C# and .NET code including models, brokers, services, controllers, and tests.",
-  "the_standard_version": "v2.12.0",
+  "the_standard_version": "v2.13.0",
   "skill_version": "v0.3.0.0",
 
   "inputs": [

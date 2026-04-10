@@ -1,7 +1,7 @@
 ---
 name: The Standard Architecture
 description: Enforces Standard-compliant modeling, brokers, services, aggregation, exposers, REST APIs, and UI architecture.
-the standard version: v2.12.0
+the standard version: v2.13.0
 skill version: v0.3.0.0
 ---
 
@@ -225,30 +225,46 @@ This skill explicitly covers:
       - Web Applications
       - Mobile Applications
       - Other Types
-  - Web Applications
-    - Anatomy
-      - Base Component
-        - Implementation
-        - Utilization
-        - Restrictions
-      - Core Component
-        - Elements
-          - Existence
-            - Property Assignment
-            - Searching by Id
-            - General Search
-          - Properties
+     - Web Applications
+      - Anatomy
+        - Base Component
+          - Implementation
+          - Utilization
+          - Restrictions
+        - Core Component
+          - Elements
+            - Existence
+              - Property Assignment
+              - Searching by Id
+              - General Search
+            - Properties
+            - Actions
+          - Styles
           - Actions
-        - Styles
-        - Actions
-        - Restrictions
-      - Pages
-      - Unobtrusiveness
-      - Organization
+          - Restrictions
+        - Pages
+        - Unobtrusiveness
+        - Organization
+
+  The following topics are governed by dedicated skills that extend this skill.
+  See `## Related skills` for activation guidance:
+  - CulDeSac event brokers, event services, publish/subscribe, DI registration, and startup activation → `the-standard-events`
+  - Release versioning, file versioning, API versioning, and deprecation → `the-standard-versioning`
 
 ## When to use
 
 Use this skill for system design, architecture review, decomposition, refactoring, API design, UI architecture, dependency-flow design, or when deciding where behavior belongs.
+
+## Related skills
+
+This skill defines the structural rules for the entire system.
+When a specific architectural pattern is chosen, a dedicated skill governs its detailed implementation.
+Activate the relevant skill as soon as the pattern is identified -- do not wait until implementation is underway.
+
+| Pattern | Skill | Activate when |
+|---|---|---|
+| CulDeSac eventing: event broker, event service, publish/subscribe, DI registration, startup activation | `the-standard-events` | An orchestration service needs to publish a domain event or subscribe to one without a synchronous return |
+| Release versioning, file versioning, API versioning, deprecation | `the-standard-versioning` | A model, service, or API contract change is introduced, a release is being cut, or existing code must be deprecated |
 
 ## System-wide architecture rules
 
@@ -481,6 +497,7 @@ catch (NullStudentException nullStudentException)
 19. Orchestration services live under Services/Orchestrations.
 20. Orchestration service virtual models live under Models/Orchestrations/{Entity Plural}/{Entity}.cs
 21. Orchestration service exceptionmodels live under Models/Orchestrations/{Entity Plural}/Exceptions/ 
+22. When Cul-De-Sac eventing is chosen (rules 13 and 16), activate `the-standard-events` skill -- it governs the event broker, event service, validation, exception handling, DI lifetime, and startup activation for the event layer.
 
 ## Aggregation service rules
 
@@ -623,6 +640,23 @@ catch (NullStudentException nullStudentException)
 10. Core components do not call other core components at the same level.
 11. One view service corresponds to one core component and one view model.
 
+## Versioning and breaking changes
+
+This skill governs *what* the correct structure is at each layer.
+When a structural change breaks an existing contract -- a model property added or removed, a service signature changed, an API route or response shape altered -- it is no longer purely an architecture decision.
+Activate `the-standard-versioning` skill at that point.
+
+The versioning skill governs:
+- When and how to increment the release version
+- How to introduce new model versions under `Vn` subfolders without overwriting earlier versions
+- How to introduce new service versions alongside earlier ones
+- How to version API routes so earlier consumers are not broken
+- How to signal deprecation on models, services, and routes
+
+The architecture skill and the versioning skill are complementary:
+- Architecture answers: is the shape correct?
+- Versioning answers: how do we change it safely?
+
 ## Architecture review checklist
 
 When reviewing or generating architecture, verify all of the following:
@@ -640,6 +674,8 @@ When reviewing or generating architecture, verify all of the following:
 10. APIs honor route and status-code rules.
 11. UI honors single dependency, unobtrusiveness, and anatomy rules.
 12. Architecture remains readable, autonomous, and rewritable.
+13. If Cul-De-Sac eventing is used, `the-standard-events` skill has been activated and its rules are satisfied.
+14. If a model, service, or API contract has changed or a release is being cut, `the-standard-versioning` skill has been activated and its rules are satisfied.
 
 ## .NET implementation profile included from the supplied implementation specification
 

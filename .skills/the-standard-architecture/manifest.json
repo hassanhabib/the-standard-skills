@@ -2,7 +2,7 @@
   "name": "the-standard-architecture",
   "version": "1.0.0",
   "description": "Governs how Standard-compliant systems are decomposed into models, brokers, foundation services, processing services, orchestration services, aggregation services, and exposers. Defines dependency flow, validation strategy, exception categorization, and REST API conventions.",
-  "the_standard_version": "v2.12.0",
+  "the_standard_version": "v2.13.0",
   "skill_version": "v0.3.0.0",
 
   "inputs": [
@@ -19,6 +19,19 @@
 
   "dependencies": [
     "the-standard-core"
+  ],
+
+  "related_skills": [
+    {
+      "skill": "the-standard-events",
+      "relationship": "extended-by",
+      "when": "CulDeSac eventing is chosen -- event broker, event service, publish/subscribe, DI registration, and startup activation"
+    },
+    {
+      "skill": "the-standard-versioning",
+      "relationship": "extended-by",
+      "when": "a model, service, or API contract change is introduced, a release is being cut, or existing code must be deprecated"
+    }
   ],
 
   "activation": {

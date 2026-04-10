@@ -1,0 +1,101 @@
+{
+  "name": "the-standard-events",
+  "version": "1.0.0",
+  "description": "Governs event-driven architecture under The Standard: CulDeSac pattern, LeVent-backed event brokers, foundation event services, validation, exception mapping, file structure, naming conventions, and test structure for publish and subscribe operations.",
+  "the_standard_version": "v2.13.0",
+  "skill_version": "v0.1.0.0",
+
+  "inputs": [
+    "A request to implement event-driven communication between services",
+    "An event service or event broker to review",
+    "A request to determine whether the CulDeSac pattern applies",
+    "A publish or subscribe operation that needs to be implemented or tested",
+    "A request to wire up a subscriber orchestration service at application startup",
+    "A DI registration file (Startup.cs or Program.cs) to review for event broker, service, or startup activation compliance"
+  ],
+
+  "outputs": [
+    "Standard-compliant event broker: IEventBroker, IEventBroker_[Entity].cs, EventBroker.cs, EventBroker_[Entity].cs",
+    "Standard-compliant event service: main, .Validations.cs, .Exceptions.cs",
+    "Correct event service test files: root, Logic.Publish, Logic.Subscribe, Validations.Publish, Validations.Subscribe, Exceptions.Publish, Exceptions.Subscribe",
+    "Publisher orchestration service consuming Publish[Entity]Async",
+    "Subscriber orchestration service with plural SubscribeTo[Entity]Events activation method",
+    "Singleton DI registrations for IEventBroker and I[Entity]EventService",
+    "Startup activation calls in Configure() or minimal API equivalent",
+    "Feedback on event service violations with rule references",
+    "Naming and exception hierarchy conforming to the events-xxx rule set"
+  ],
+
+  "dependencies": [
+    "the-standard-core",
+    "the-standard-architecture"
+  ],
+
+  "activation": {
+    "trigger": "implementing events, reviewing event services, adding publish or subscribe operations, determining CulDeSac applicability",
+    "note": "Always activate the-standard-core and the-standard-architecture first."
+  },
+
+  "required_libraries": [
+    "LeVent",
+    "xUnit",
+    "Moq",
+    "FluentAssertions",
+    "Xeption"
+  ],
+
+  "validation": {
+    "required": true,
+    "files": {
+      "checklist": "validations/checklist.md",
+      "anti_patterns": "validations/anti-patterns.md"
+    }
+  },
+
+  "files": {
+    "rules": {
+      "human": "rules/rules.md",
+      "machine": "rules/rules.json"
+    },
+    "examples": {
+      "good": [
+        "examples/good/example_event_service_publish.cs",
+        "examples/good/example_event_service_subscribe.cs",
+        "examples/good/example_event_service_orchestration_di.cs"
+      ],
+      "bad": [
+        "examples/bad/example_bad_event_service.cs"
+      ]
+    },
+    "templates": {
+      "brokers": [
+        "templates/brokers/levent/event_broker_template.cs"
+      ],
+      "foundations": [
+        "templates/foundations/event_service_template.cs",
+        "templates/foundations/event_service_test_class_root_template.cs",
+        "templates/foundations/event_service_test_class_publish_template.cs",
+        "templates/foundations/event_service_test_class_subscribe_template.cs",
+        "templates/foundations/event_service_test_publish_template.cs",
+        "templates/foundations/event_service_test_subscribe_template.cs"
+      ],
+      "real_world_examples": [
+        "templates/foundations/IProcessedEventService.cs",
+        "templates/foundations/ProcessedEventService.cs",
+        "templates/foundations/ProcessedEventService.Validations.cs",
+        "templates/foundations/ProcessedEventService.Exceptions.cs",
+        "templates/foundations/ProcessedEventServiceTests.Logic.Publish.cs",
+        "templates/foundations/ProcessedEventServiceTests.Logic.Listen.cs",
+        "templates/foundations/ProcessedEventServiceTests.Validations.Publish.cs",
+        "templates/foundations/ProcessedEventServiceTests.Validations.Listen.cs",
+        "templates/foundations/ProcessedEventServiceTests.Exceptions.Publish.cs",
+        "templates/foundations/ProcessedEventServiceTests.Exceptions.Listen.cs"
+      ]
+    },
+    "validations": {
+      "checklist": "validations/checklist.md",
+      "anti_patterns": "validations/anti-patterns.md"
+    },
+    "contracts": "contracts/contracts.json"
+  }
+}

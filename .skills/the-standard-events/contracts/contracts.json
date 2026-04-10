@@ -1,0 +1,158 @@
+{
+  "skill": "the-standard-events",
+  "version": "1.0.0",
+
+  "cul_de_sac_pattern": {
+    "definition": "A dead-end event flow where data is published outward without a synchronous return from any subscriber.",
+    "when_to_apply": "When a service needs to notify other contexts of a domain event without blocking or coupling to the subscriber.",
+    "prohibited": "Using events as a substitute for synchronous request-response flows."
+  },
+
+  "event_service_contract": {
+    "operations_per_entity": 2,
+    "publish": {
+      "signature": "ValueTask Publish[Entity]Async([Entity] [entity])",
+      "async": true,
+      "validates": "entity is not null"
+    },
+    "subscribe": {
+      "signature": "void SubscribeTo[Entity]Event(Func<[Entity], ValueTask> [entity]EventHandler)",
+      "async": false,
+      "validates": "handler is not null"
+    },
+    "dependencies": ["IEventBroker"],
+    "forbidden_dependencies": ["ILoggingBroker", "IStorageBroker", "any other service"]
+  },
+
+  "event_broker_contract": {
+    "interface": "IEventBroker",
+    "implementation": "EventBroker",
+    "library": "LeVent",
+    "per_entity_files": {
+      "interface_partial": "IEventBroker_[Entity].cs",
+      "implementation_partial": "EventBroker_[Entity].cs"
+    },
+    "per_entity_operations": {
+      "publish": "ValueTask Publish[Entity]Async([Entity] [entity], string eventName = null)",
+      "subscribe": "void SubscribeTo[Entity]Event(Func<[Entity], ValueTask> [entity]EventHandler, string eventName = null)"
+    },
+    "levent_client_property": "ILeVentClient<[Entity]> [Entity]Events"
+  },
+
+  "exception_hierarchy": {
+    "validation_path": {
+      "null_entity": "NullEventException -> [Entity]EventValidationException",
+      "null_handler": "NullEventHandlerException -> [Entity]EventValidationException"
+    },
+    "service_path": {
+      "unexpected_error": "Exception -> FailedEventServiceException -> [Entity]EventServiceException"
+    },
+    "absent_categories": ["DependencyValidationException", "DependencyException", "CriticalDependencyException"]
+  },
+
+  "file_structure": {
+    "service": {
+      "main": "[Entity]EventService.cs",
+      "validations": "[Entity]EventService.Validations.cs",
+      "exceptions": "[Entity]EventService.Exceptions.cs"
+    },
+    "broker": {
+      "interface_base": "IEventBroker.cs",
+      "interface_entity": "IEventBroker_[Entity].cs",
+      "implementation_base": "EventBroker.cs",
+      "implementation_entity": "EventBroker_[Entity].cs"
+    },
+    "tests": {
+      "root": "[Entity]EventServiceTests.cs",
+      "logic_publish": "[Entity]EventServiceTests.Logic.Publish.cs",
+      "logic_subscribe": "[Entity]EventServiceTests.Logic.Subscribe.cs",
+      "validations_publish": "[Entity]EventServiceTests.Validations.Publish.cs",
+      "validations_subscribe": "[Entity]EventServiceTests.Validations.Subscribe.cs",
+      "exceptions_publish": "[Entity]EventServiceTests.Exceptions.Publish.cs",
+      "exceptions_subscribe": "[Entity]EventServiceTests.Exceptions.Subscribe.cs"
+    }
+  },
+
+  "naming_conventions": {
+    "interface": "I[Entity]EventService",
+    "implementation": "[Entity]EventService",
+    "publish_method": "Publish[Entity]Async",
+    "subscribe_method": "SubscribeTo[Entity]Event",
+    "subscribe_forbidden_name": "ListenTo[Entity]Event",
+    "exceptions": {
+      "null_entity": "Null[Entity]EventException",
+      "null_handler": "Null[Entity]EventHandlerException",
+      "failed_service": "Failed[Entity]EventServiceException",
+      "validation_wrapper": "[Entity]EventValidationException",
+      "service_wrapper": "[Entity]EventServiceException"
+    }
+  },
+
+  "test_order": [
+    "ShouldSubscribeTo[Entity]Events",
+    "ShouldPublish[Entity]Async",
+    "ShouldThrowValidationExceptionOnSubscribeTo[Entity]EventIfEventHandlerIsNull",
+    "ShouldThrowValidationExceptionOnPublishIf[Entity]IsNullAsync",
+    "ShouldThrowServiceExceptionOnSubscribeTo[Entity]EventIfServiceErrorOccurs",
+    "ShouldThrowServiceExceptionOnPublish[Entity]EventIfServiceErrorOccursAsync"
+  ],
+
+  "required_verifications_per_test": [
+    "exact_broker_calls_with_Times.Once_or_Times.Never",
+    "eventBrokerMock.VerifyNoOtherCalls()"
+  ],
+
+  "forbidden": [
+    "loggingBrokerMock_in_event_service_tests",
+    "ListenTo_prefix_on_subscribe_operations",
+    "DependencyValidationException_in_event_services",
+    "DependencyException_in_event_services",
+    "CriticalDependencyException_in_event_services",
+    "business_logic_in_broker",
+    "multiple_service_dependencies_in_event_service",
+    "missing_VerifyNoOtherCalls_on_eventBrokerMock",
+    "event_broker_lifetime_that_conflicts_with_infrastructure_requirements",
+    "event_service_lifetime_longer_than_broker_lifetime",
+    "SubscribeTo_called_inside_controller_or_service_method",
+    "missing_startup_activation_of_SubscribeTo"
+  ],
+
+  "orchestration_integration": {
+    "publisher_orchestration": {
+      "calls": "Publish[Entity]Async on the event service",
+      "owns": "entity composition before publishing",
+      "forbidden": "knowledge of which services subscribe"
+    },
+    "subscriber_orchestration": {
+      "public_activation_method": "SubscribeTo[Entity]Events (plural)",
+      "delegates_to": "this.[entity]EventService.SubscribeTo[Entity]Event(handler)",
+      "handler": "private async ValueTask On[Entity]EventReceivedAsync([Entity] [entity])"
+    },
+    "naming_distinction": {
+      "event_service_method": "SubscribeTo[Entity]Event (singular)",
+      "orchestration_activation_method": "SubscribeTo[Entity]Events (plural)"
+    }
+  },
+
+  "dependency_injection": {
+    "event_broker_lifetime": "depends on infrastructure",
+    "in_memory_infrastructure_lifetime": "singleton -- required for correctness; subscription handlers are registered in client instances and lost if the instance is not shared",
+    "external_infrastructure_lifetime": "follow client library recommendations -- typically singleton for connection reuse and message processor lifecycle; subscriptions live in the external service and are not lost when the client is recreated",
+    "event_service_lifetime": "must match or be shorter than the IEventBroker lifetime",
+    "preferred_default": "singleton -- safe for all known event infrastructure",
+    "startup_activation": {
+      "startup_cs_pattern": "app.ApplicationServices.GetService<I[Entity]OrchestrationService>().SubscribeTo[Entity]Events()",
+      "minimal_api_pattern": "app.Services.GetService<I[Entity]OrchestrationService>().SubscribeTo[Entity]Events()",
+      "when": "after DI container is built, in Configure() or after builder.Build()",
+      "forbidden_locations": ["controller actions", "service methods", "middleware", "constructors"]
+    }
+  },
+
+  "required_libraries": {
+    "event_infrastructure": "LeVent",
+    "mocking": "Moq",
+    "assertions": "FluentAssertions",
+    "test_framework": "xUnit",
+    "exception_base": "Xeption"
+  }
+}

@@ -2,7 +2,7 @@
   "name": "the-standard-core",
   "version": "1.0.0",
   "description": "The governing layer of The Standard. Defines Tri-Nature theory, the mandatory engineering sequence (Purposing → Modeling → Simulation), core principles, and non-negotiable operating rules that govern all other Standard skills.",
-  "the_standard_version": "v2.12.0",
+  "the_standard_version": "v2.13.0",
   "skill_version": "v0.3.0.0",
 
   "inputs": [

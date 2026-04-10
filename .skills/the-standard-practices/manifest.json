@@ -2,7 +2,7 @@
   "name": "the-standard-practices",
   "version": "1.0.0",
   "description": "Governs how contributions are structured, branches are named, commits are made (FAIL/PASS TDD discipline), pull requests are formatted, configuration is handled, and the forking workflow is applied for open-source Standard-compliant projects.",
-  "the_standard_version": "v2.12.0",
+  "the_standard_version": "v2.13.0",
   "skill_version": "v0.3.0.0",
 
   "inputs": [
