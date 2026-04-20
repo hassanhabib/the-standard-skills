@@ -1,4 +1,4 @@
----
+﻿---
 name: The Standard Architecture
 description: Enforces Standard-compliant modeling, brokers, services, aggregation, exposers, REST APIs, and UI architecture.
 the standard version: v2.13.0
@@ -97,7 +97,7 @@ This skill explicitly covers:
       - Exception Handling
         - Exceptions Mappings
           - Localise External Exceptions
-          - Caragorize Exceptions
+          - Categorize Exceptions
         - Logging
   - Processing Services (Higher-Order Business Logic)
     - Introduction
@@ -118,7 +118,7 @@ This skill explicitly covers:
       - Non-Exception Local Models
       - Exception Handling      
         - Unwrap and Localise Foundation Exceptions
-        - Caragorize Exceptions
+        - Categorize Exceptions
         - Logging
   - Orchestration Services (Complex Higher Order Logic)
     - Introduction
@@ -147,7 +147,7 @@ This skill explicitly covers:
         - Enforced Order
       - Exception Handling      
         - Unwrap and Localise Foundation Exceptions
-        - Caragorize Exceptions
+        - Categorize Exceptions
         - Logging
     - Variations
       - Coordination
