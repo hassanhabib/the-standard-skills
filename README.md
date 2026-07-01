@@ -33,14 +33,15 @@ The Standard is **all-in or all-out.** It cannot be partially adopted. Every pri
 
 ## Skills Overview
 
-This repository contains **five interconnected skills** that together cover the complete engineering lifecycle. `the-standard-core` governs all others — establishing the theoretical foundation that every other skill builds upon.
+This repository contains **six interconnected skills** that together cover the complete engineering lifecycle. `the-standard-core` governs all others — establishing the theoretical foundation that every other skill builds upon.
 
 ```
 the-standard-core
     ├── the-standard-architecture
     ├── the-standard-code-csharp
     ├── the-standard-testing
-    └── the-standard-practices
+    ├── the-standard-practices
+    └── the-standard-comprehension-gate
 ```
 
 ---
@@ -219,6 +220,35 @@ users/[username]/[CATEGORY]-[entity]-[action]
 │   └── Orchestrations/
 └── Controllers/
 ```
+
+---
+
+### `the-standard-comprehension-gate`
+
+Keeps a conscious human between intent and consequence. Before an agent takes any
+impactful, hard-to-reverse action on the human's behalf — committing, pushing, deploying,
+running a migration or side-effecting script, deleting data, changing infra/config — this
+skill verifies that the human actually understands what is about to happen.
+
+Understanding must be **demonstrated, not asserted**: "looks good" and "I understand" are
+never a pass. The gate asks 1–3 questions **anchored in the actual codebase** (real
+symbols, schema, callers) so they cannot be answered by a model that has not read the repo
+— which stops the human from pasting the question into another chat and offloading the
+thinking. It grades answers honestly, escalates with harder questions when they miss, and
+never counts its own explanation as the human knowing the answer.
+
+**Depth scales to risk:**
+
+| Risk | Example | Questions |
+|---|---|---|
+| Low | Small reversible commit on a feature branch | 1 |
+| Medium | Push to a shared branch; routine deploy | 2 |
+| High | Migration, delete, force-push, prod config — anything irreversible | 3 |
+
+**Three outcomes:** *proceed* (every question cleared by the human), *hold* (understanding
+not demonstrated — do not act), or *redesign* — the best outcome, where the now-engaged
+human concludes the action is wrong and changes it. A deliberate override is allowed but
+must be effortful: name what goes unverified and the risk, and require explicit acceptance.
 
 ---
 

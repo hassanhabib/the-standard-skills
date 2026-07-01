@@ -1,0 +1,39 @@
+{
+  "rules": [
+    { "id": "cg-000", "category": "principle", "description": "Understanding must be demonstrated, not asserted. 'I understand', 'looks good', and 'just do it' are never a pass.", "severity": "error" },
+
+    { "id": "cg-010", "category": "scope", "description": "Gate any action that is hard to reverse, changes shared or persistent state, or is visible outside the local machine.", "severity": "error" },
+    { "id": "cg-011", "category": "scope", "description": "Gate commits, pushes, merges, force-pushes, rebases onto shared branches, history rewrites, tags, and releases.", "severity": "error" },
+    { "id": "cg-012", "category": "scope", "description": "Gate deploys, releases, package/image publishing, and environment promotions.", "severity": "error" },
+    { "id": "cg-013", "category": "scope", "description": "Gate migrations, backfills, DELETE/UPDATE/DROP/TRUNCATE, bulk edits, and cache/queue purges.", "severity": "error" },
+    { "id": "cg-014", "category": "scope", "description": "Gate side-effecting scripts: writing outside the repo, calling a paid or external API, mutating infra, sending communications.", "severity": "error" },
+    { "id": "cg-015", "category": "scope", "description": "Gate changes to secrets, env vars, IAM/permissions, CI/CD, feature flags, DNS, and IaC apply.", "severity": "error" },
+    { "id": "cg-016", "category": "scope", "description": "Gate deleting or overwriting files the agent did not create.", "severity": "error" },
+    { "id": "cg-017", "category": "scope", "description": "Do NOT gate read-only, local, trivially reversible work (reading files, git status/diff/log, tests, builds, linters, uncommitted edits). Over-gating trains humans to click through.", "severity": "error" },
+    { "id": "cg-018", "category": "scope", "description": "When size and consequence disagree, trust the consequence. One line can be the most dangerous line.", "severity": "warning" },
+
+    { "id": "cg-020", "category": "depth", "description": "Scale the number and difficulty of questions to risk: low = 1, medium = 2, high = 3.", "severity": "error" },
+    { "id": "cg-021", "category": "depth", "description": "Bump the risk tier when amplifiers are present: production/shared environments, large blast radius, no easy rollback, time pressure or fatigue.", "severity": "warning" },
+
+    { "id": "cg-030", "category": "questions", "description": "Every question must be anchored in this codebase's real symbols, files, schema, and callers — un-copy-pasteable. If a model with no repo access could answer it, it is too generic and must be rewritten.", "severity": "error" },
+    { "id": "cg-031", "category": "questions", "description": "Ask about consequences and blast radius, not definitions or trivia.", "severity": "error" },
+    { "id": "cg-032", "category": "questions", "description": "Questions must be un-guessable from their own text: no embedded answers, no yes/no, no leading.", "severity": "error" },
+    { "id": "cg-033", "category": "questions", "description": "Only ask questions you would actually hold the action for. If a wrong answer would not stop you, cut the question.", "severity": "error" },
+    { "id": "cg-034", "category": "questions", "description": "Never reveal the answer in the question, a hint, or the framing.", "severity": "error" },
+    { "id": "cg-035", "category": "questions", "description": "Ask the questions, then stop and wait. Do not answer them yourself or proceed.", "severity": "error" },
+
+    { "id": "cg-040", "category": "judging", "description": "Judge each answer as correct, partial/vague, or wrong, on whether it reflects an accurate model of the outcome, not on eloquence.", "severity": "error" },
+    { "id": "cg-041", "category": "judging", "description": "Weight a confident wrong answer heavily — it is the strongest signal to keep the gate closed.", "severity": "error" },
+
+    { "id": "cg-050", "category": "escalation", "description": "On a wrong or vague answer, close the gap briefly (teach, do not scold), then re-probe the same gap at higher difficulty.", "severity": "error" },
+    { "id": "cg-051", "category": "escalation", "description": "Teaching an answer never clears the question. The human must give it back correctly before it counts.", "severity": "error" },
+    { "id": "cg-052", "category": "escalation", "description": "After ~2-3 focused rounds with no correct answer, do not take the action. Offer off-ramps: walk through it, shrink it, or shelve it.", "severity": "error" },
+
+    { "id": "cg-060", "category": "outcomes", "description": "Proceed only when EVERY question asked is cleared by the human. No reclassifying a missed question as 'secondary' to justify proceeding.", "severity": "error" },
+    { "id": "cg-061", "category": "outcomes", "description": "A human who concludes the action is wrong and redesigns it is the best outcome; accept it rather than forcing the original questions. But a redesign clears only on concrete reasoning, not confident vocabulary.", "severity": "error" },
+    { "id": "cg-062", "category": "outcomes", "description": "Do not grade on a curve to reach 'yes' in either direction (teaching-then-proceeding, or rubber-stamping sophisticated-sounding claims).", "severity": "error" },
+
+    { "id": "cg-070", "category": "conduct", "description": "Keep tone that of a sharp, warm colleague doing a gut-check — not a bouncer. Keep it short; scale down for trivial changes.", "severity": "warning" },
+    { "id": "cg-071", "category": "override", "description": "Honor a deliberate override only after stating what goes unverified and the specific risk, and requiring explicit acceptance of that risk. Friction, not a wall.", "severity": "error" }
+  ]
+}

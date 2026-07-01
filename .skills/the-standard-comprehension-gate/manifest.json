@@ -1,0 +1,52 @@
+{
+  "name": "the-standard-comprehension-gate",
+  "version": "1.0.0",
+  "description": "Ensures the human demonstrably understands any impactful, hard-to-reverse action before it is taken, by actively verifying comprehension with project-anchored questions rather than accepting assertion. Applies to commits, pushes, deploys, migrations, destructive scripts, and any state-changing or outward-facing action.",
+  "the_standard_version": "v2.13.0",
+  "skill_version": "v0.1.0.0",
+
+  "inputs": [
+    "An about-to-run impactful action (commit, push, merge, deploy, migration, destructive query, side-effecting script, infra/config/secret change, file deletion)",
+    "The diff or command and its blast radius",
+    "The human's answers to comprehension questions"
+  ],
+
+  "outputs": [
+    "Project-anchored comprehension questions scaled to risk",
+    "An honest verdict on each answer (correct / partial / wrong)",
+    "Escalated follow-up questions when answers miss",
+    "A decision: proceed (understanding proven), hold (do not act), or redesign the action",
+    "A deliberate, explicit override record when the human knowingly accepts unverified risk"
+  ],
+
+  "dependencies": [],
+
+  "activation": {
+    "trigger": "about to commit, push, merge, deploy, run a migration or side-effecting script, delete data or files, or change infra/config/secrets — any hard-to-reverse, shared-state, or outward-facing action",
+    "note": "Standalone skill with no prerequisites. Do not activate for read-only or trivially reversible local work."
+  },
+
+  "validation": {
+    "required": true,
+    "checklist": "validations/checklist.md",
+    "anti_patterns": "validations/anti-patterns.md"
+  },
+
+  "files": {
+    "rules": {
+      "human": "rules/rules.md",
+      "machine": "rules/rules.json"
+    },
+    "examples": {
+      "good": [
+        "examples/good/example_gate_migration.md",
+        "examples/good/example_anchored_questions.md"
+      ],
+      "bad": [
+        "examples/bad/example_theater_gate.md",
+        "examples/bad/example_generic_questions.md"
+      ]
+    },
+    "contracts": "contracts/contracts.json"
+  }
+}

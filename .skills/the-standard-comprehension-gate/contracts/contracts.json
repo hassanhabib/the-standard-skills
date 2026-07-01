@@ -1,0 +1,79 @@
+{
+  "skill": "the-standard-comprehension-gate",
+  "version": "1.0.0",
+
+  "gate_trigger": {
+    "gate_when_any_true": [
+      "hard to reverse",
+      "changes shared or persistent state",
+      "visible outside the local machine"
+    ],
+    "examples_gated": [
+      "commit", "push", "merge", "force-push", "rebase-onto-shared", "history-rewrite",
+      "tag", "release", "deploy", "publish-package", "migration", "backfill",
+      "DELETE", "UPDATE", "DROP", "TRUNCATE", "cache-purge", "side-effecting-script",
+      "secret-change", "iam-change", "ci-cd-change", "feature-flag-change", "dns-change",
+      "iac-apply", "delete-foreign-files"
+    ],
+    "never_gate": [
+      "read-only commands", "git status/diff/log", "tests", "builds", "linters",
+      "type-checks", "uncommitted edits", "local dev servers"
+    ],
+    "tie_breaker": "when size and consequence disagree, judge by consequence"
+  },
+
+  "depth": {
+    "low": { "questions": 1, "example": "small reversible commit on a feature branch" },
+    "medium": { "questions": 2, "example": "push to a shared branch; routine deploy" },
+    "high": { "questions": 3, "example": "migration, delete, force-push, prod config, anything irreversible" },
+    "amplifiers_that_raise_tier": [
+      "production or shared environment",
+      "large blast radius",
+      "no easy rollback",
+      "time pressure or fatigue",
+      "human moving faster than they are reading"
+    ]
+  },
+
+  "question_contract": {
+    "must_be_anchored": "references this repo's real symbols, files, schema, callers",
+    "anchor_test": "a model with no access to this repo must NOT be able to answer it",
+    "must_target": "consequences and blast radius, not definitions or trivia",
+    "must_not": ["reveal the answer", "be yes/no", "be leading", "be guessable from its own text"],
+    "only_ask_if": "a wrong answer would actually stop you"
+  },
+
+  "verdicts": ["correct", "partial", "wrong"],
+
+  "outcomes": {
+    "proceed": "every asked question cleared by the human, in their own words, after any teaching",
+    "hold": "understanding not demonstrated after ~2-3 focused rounds; do not act",
+    "redesign": "human concludes the action is wrong and changes it; accept on concrete reasoning only"
+  },
+
+  "invariants": {
+    "assertion_is_not_understanding": true,
+    "teaching_is_not_clearing": true,
+    "no_reclassifying_missed_questions": true,
+    "no_curve_grading_in_either_direction": true
+  },
+
+  "override": {
+    "allowed": true,
+    "requires": [
+      "state what goes unverified",
+      "state the specific risk",
+      "explicit human acceptance of that risk"
+    ],
+    "is": "friction, not a wall"
+  },
+
+  "forbidden": [
+    "accepting 'I understand' / 'looks good' / 'just do it' as a pass",
+    "answering your own comprehension questions then proceeding",
+    "generic questions answerable without the repo",
+    "reclassifying a missed question as secondary to proceed",
+    "over-gating read-only or trivially reversible actions",
+    "silent override without naming the unverified risk"
+  ]
+}
