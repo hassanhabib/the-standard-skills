@@ -130,6 +130,16 @@ students.Where(student => student ... );
 ```cs
 students.Where(s => s ... );
 ```
+
+This holds **everywhere a lambda parameter appears, including test doubles**. A mock setup or verification takes a meaningful name — the type it stands for — never a single letter:
+##### Do
+```cs
+storageBrokerMock.Setup(broker => broker.InsertStudentAsync(student));
+```
+##### Don't
+```cs
+storageBrokerMock.Setup(b => b.InsertStudentAsync(student));
+```
 <br />
 
 #### 0.0.1 Plurals 
