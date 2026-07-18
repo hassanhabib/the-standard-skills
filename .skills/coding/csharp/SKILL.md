@@ -475,7 +475,7 @@ public async ValueTask<List<Student>> GetAllWashingtonSchoolsStudentsAsync() => 
 <br />
 
 ##### 1.1.0.1 Multiple-Liners
-If a method contains multiple liners separated or connected via chaining it must have a scope. Unless the parameters are going on the next line then a one-liner method with multi-liner params is allowed.
+A fat-arrow (expression-bodied) method's body must fit on **a single line** under the arrow. The moment the body needs more than one line — chained calls, or a call whose arguments wrap across several lines — it **must** use a scoped `{ }` body with an explicit `return`. Wrapping the method's own parameters across lines does not earn a fat arrow either: if the whole thing does not read as one arrow + one line, scope it.
 
 ##### Do
 ```cs
@@ -517,6 +517,47 @@ public Student AddStudent(Student student) =>
 public Student AddStudent(
 	Student student) =>
 		this.storageBroker.InsertStudent(student);
+```
+
+A call whose **arguments wrap across lines** is a multi-line body too — scope it, do not fat-arrow it:
+
+##### Don't
+```cs
+private async ValueTask<TResult> PostAsync<TContent, TResult>(
+	string relativeUrl,
+	TContent content) =>
+	await this.apiClient.PostContentAsync<TContent, TResult>(
+		relativeUrl,
+		content,
+		serializationFunction: async value => Serialize(value),
+		deserializationFunction: async json => Deserialize<TResult>(json));
+```
+
+##### Do
+```cs
+private async ValueTask<TResult> PostAsync<TContent, TResult>(
+	string relativeUrl,
+	TContent content)
+{
+	return await this.apiClient.PostContentAsync<TContent, TResult>(
+		relativeUrl,
+		content,
+		serializationFunction: async value => Serialize(value),
+		deserializationFunction: async json => Deserialize<TResult>(json));
+}
+```
+
+One deliberate exception: a fat arrow whose body is a **single call taking a braced lambda** keeps the lambda's own `{ }` as its scope, so it stays a fat arrow. This is the `TryCatch` service pattern, and it is correct:
+
+##### Do
+```cs
+public ValueTask<Student> AddStudentAsync(Student student) =>
+TryCatch(async () =>
+{
+	ValidateStudent(student);
+
+	return await this.storageBroker.InsertStudentAsync(student);
+});
 ```
 
 #### 1.1.1 Returns
