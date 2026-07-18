@@ -340,9 +340,9 @@ need to change if an implementation later becomes truly asynchronous.
 **Never `ValueTask.FromResult`.** When a method — or a lambda — returns `ValueTask` / `ValueTask<T>`
 but does no real awaiting, mark it `async` and **return the value directly**. Do not wrap it in
 `ValueTask.FromResult(...)`. The `async` keyword *is* the abstraction; `FromResult` leaks the
-sync-wrapping mechanism into the body. This yields an `async` method with no `await`, which raises
-**CS1998** — that is the intended, uniform idiom here, not a bug, so **suppress CS1998 at the project
-level** (`<NoWarn>$(NoWarn);CS1998</NoWarn>`).
+sync-wrapping mechanism into the body. This is an `async` method with no `await` — C# 13 / .NET 10
+compiles it cleanly (no **CS1998**). Should an older toolchain warn, suppress CS1998 at the project
+level (`<NoWarn>$(NoWarn);CS1998</NoWarn>`); it is the intended idiom, not a bug.
 
 | Pattern | Verdict |
 |---|---|
