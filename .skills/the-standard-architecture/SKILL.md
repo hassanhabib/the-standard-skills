@@ -337,13 +337,43 @@ internally await anything**.
 This is The Standard §1.5.1: the public contract is uniformly async so callers never
 need to change if an implementation later becomes truly asynchronous.
 
+**Never `ValueTask.FromResult`.** When a method — or a lambda — returns `ValueTask` / `ValueTask<T>`
+but does no real awaiting, mark it `async` and **return the value directly**. Do not wrap it in
+`ValueTask.FromResult(...)`. The `async` keyword *is* the abstraction; `FromResult` leaks the
+sync-wrapping mechanism into the body. This yields an `async` method with no `await`, which raises
+**CS1998** — that is the intended, uniform idiom here, not a bug, so **suppress CS1998 at the project
+level** (`<NoWarn>$(NoWarn);CS1998</NoWarn>`).
+
 | Pattern | Verdict |
 |---|---|
-| `public async ValueTask LogWarningAsync(string message) => this.logger.LogWarning(message);` | **Correct** — async keyword, direct call |
-| `public ValueTask<IQueryable<Student>> SelectAllStudentsAsync() => ValueTask.FromResult(...)` | **Correct** — ValueTask.FromResult wraps sync result |
-| `public async ValueTask<IQueryable<Student>> SelectAllStudentsAsync() => await this.SelectAllAsync<Student>();` | **Correct** — async/await through generic helper |
-| `public IQueryable<Student> SelectAllStudents() => this.Students.AsNoTracking();` | **WRONG** — synchronous, no ValueTask |
-| `public ValueTask LogWarningAsync(string message) => new ValueTask(Task.Run(() => ...));` | **WRONG** — Task.Run wraps a synchronous call needlessly |
+| `public async ValueTask LogWarningAsync(string message) => this.logger.LogWarning(message);` | **Correct** — `async`, direct call |
+| `public async ValueTask<string> ReturnAsync(string payload) { ...; return payload; }` | **Correct** — `async`, return the value directly |
+| `public async ValueTask<IQueryable<Student>> SelectAllStudentsAsync() => await this.SelectAllAsync<Student>();` | **Correct** — async/await through a helper |
+| `public ValueTask<string> ReturnAsync(string payload) => ValueTask.FromResult(payload);` | **WRONG** — never `ValueTask.FromResult`; make it `async` and return the value |
+| `public IQueryable<Student> SelectAllStudents() => this.Students.AsNoTracking();` | **WRONG** — synchronous, no `ValueTask` |
+| `public ValueTask LogWarningAsync(string message) => new ValueTask(Task.Run(() => ...));` | **WRONG** — `Task.Run` wraps a synchronous call needlessly |
+
+Inside a `TryCatch` wrapper the fix is on the **lambda** — make it `async` and return the value:
+
+```csharp
+// WRONG
+public ValueTask<string> ReturnAsync(string payload) =>
+TryCatch(() =>
+{
+    ValidatePayload(payload);
+
+    return ValueTask.FromResult(payload);
+});
+
+// CORRECT
+public ValueTask<string> ReturnAsync(string payload) =>
+TryCatch(async () =>
+{
+    ValidatePayload(payload);
+
+    return payload;
+});
+```
 
 **Consequence for services:** `CreateAndLog*` helpers must be async too, because
 `ILoggingBroker.LogErrorAsync` returns `ValueTask`. Catch blocks must use `throw await`:
@@ -837,10 +867,11 @@ public partial class StorageBroker : EFxceptionsContext, IStorageBroker
         return entity;
     }
 
-    // SelectAllAsync<T> wraps IQueryable in a ValueTask so all entity methods
-    // follow the uniform async/await pattern. AsNoTracking() is applied here.
-    private ValueTask<IQueryable<T>> SelectAllAsync<T>() where T : class =>
-        ValueTask.FromResult<IQueryable<T>>(this.Set<T>().AsNoTracking());
+    // SelectAllAsync<T> exposes IQueryable as a ValueTask so all entity methods
+    // follow the uniform async pattern. async + direct return, never FromResult;
+    // AsNoTracking() is applied here.
+    private async ValueTask<IQueryable<T>> SelectAllAsync<T>() where T : class =>
+        this.Set<T>().AsNoTracking();
 
     private async ValueTask<T> SelectAsync<T>(Guid entityId) where T : class =>
         await this.FindAsync<T>(entityId);
