@@ -303,10 +303,19 @@ Activate the relevant skill as soon as the pattern is identified -- do not wait 
 0. A broker is a liaison between business logic and the outside world.
 1. Brokers must implement a local interface.
 2. Brokers must contain no business logic.
-3. Brokers must contain no flow control.
-   - No if statements for business decisions.
-   - No loops for business decisions.
-   - No switch cases for business decisions.
+3. Brokers must contain **no logic of any kind** — no branching and no iteration.
+   - No `if` statements. No ternary (`? :`) conditionals. No null-coalescing used as a branch.
+   - No `switch` statements or switch expressions.
+   - No loops (`for`, `foreach`, `while`) — and **no LINQ** (`Select`, `Where`, `OrderBy`,
+     `Take`, `Any`, `First`, `Concat`, `Aggregate`, …). LINQ is iteration.
+   - A broker method is a single, straight pass-through to its resource's primitive.
+   - **Expose primitives; do the logic upstream.** If a capability needs iteration or a
+     branch (filter files, order results, guard existence, join text, pick a match), the broker
+     exposes the primitive operations (e.g. `SelectFilePaths`, `ReadFile`, `Exists`) and the
+     **foundation service** performs the iteration/branching over them. Never smuggle the logic
+     into the broker as LINQ or a ternary.
+   - Native → primitive materialization should ride the resource's own facility (an ORM's
+     `Query<T>`, `File.ReadAllLines`) so any loop lives in the library, never in the broker's code.
 4. Brokers must not handle exceptions.
    - Let native exceptions propagate to broker-neighboring services.
 5. Brokers must own their configurations.
